@@ -2,7 +2,7 @@ import os
 from setuptools import setup, find_packages
 
 with open(
-    os.path.join(os.path.dirname(__file__), "requirements/common.txt"), "r"
+    os.path.join(os.path.dirname(__file__), "requirements/common.txt"), "r", encoding="utf-8"
 ) as fh:
     requirements = fh.readlines()
 
@@ -16,13 +16,13 @@ VERSION = None
 
 about = {}
 
-with open("README.md", "r") as fh:
+with open("README.md", "r", encoding="utf-8") as fh:
     about["long_description"] = fh.read()
 
 root = os.path.abspath(os.path.dirname(__file__))
 
 if not VERSION:
-    with open(os.path.join(root, "qe", "__version__.py")) as f:
+    with open(os.path.join(root, "qe", "__version__.py"), "r", encoding="utf-8") as f:
         exec(f.read(), about)
 else:
     about["__version__"] = VERSION
@@ -34,7 +34,7 @@ setup(
     description=DESCRIPTION,
     long_description=about["long_description"],
     long_description_content_type="text/markdown",
-    AUTHOR=AUTHOR,
+    author=AUTHOR,
     url=URL,
     keywords=["Quantum-Execute", "Public API"],
     install_requires=[req for req in requirements],

@@ -27,7 +27,7 @@ try:
         apiKeyId="0b057efbbcea46db885ae66c98d20849",  # Get from list_exchange_apis
         orderNotional=200,  # $200 notional value
         strategyType="TWAP-1",
-        startTime="2025-08-17T19:34:34+08:00",
+        startTime="2025-08-17T19:54:34+08:00",
         endTime="2025-08-19T01:44:35+08:00",
         executionDuration="5",  # 5 seconds intervals
         mustComplete=True,
@@ -53,7 +53,7 @@ try:
         apiKeyId="0b057efbbcea46db885ae66c98d20849",  # Get from list_exchange_apis
         orderNotional=200,  # $200 notional value
         strategyType="TWAP-1",
-        startTime="2025-08-17T19:34:34+08:00",
+        startTime="2025-08-17T19:54:34+08:00",
         endTime="2025-08-19T01:44:35+08:00",
         executionDuration="5",  # 5 seconds intervals
         mustComplete=True,
