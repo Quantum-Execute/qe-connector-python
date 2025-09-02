@@ -162,3 +162,20 @@ def cancel_master_order(self, masterOrderId: str, **kwargs):
     params = {"masterOrderId": masterOrderId, **kwargs}
     url_path = f"/user/trading/master-orders/{masterOrderId}/cancel"
     return self.sign_request("PUT", url_path, params)
+
+
+def create_listen_key(self, **kwargs):
+    """Create listen key (USER_DATA)
+    
+    Create a new listen key for WebSocket user data stream
+    
+    POST /user/trading/listen-key
+    
+    Keyword Args:
+        recvWindow (int, optional): The value cannot be greater than 60000
+    
+    Returns:
+        dict: Response containing listenKey, expireAt, success, and message
+    """
+    url_path = "/user/trading/listen-key"
+    return self.sign_request("POST", url_path, {**kwargs})

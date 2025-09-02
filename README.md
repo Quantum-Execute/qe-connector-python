@@ -10,12 +10,13 @@
 
 - ✅ 完整的 Quantum Execute API 支持
 - ✅ 交易所 API 密钥管理
-- ✅ 主订单创建与管理（TWAP、VWAP 等算法）
+- ✅ 主订单创建与管理（TWAP、VWAP、POV 等算法）
 - ✅ 订单查询和成交明细
-- ✅ 多种认证方式支持（HMAC、RSA、Ed25519）
+- ✅ ListenKey 创建与管理
+- ✅ 安全的 HMAC-SHA256 签名认证
 - ✅ 支持生产环境和测试环境
-- ✅ 异步和同步调用支持
-- ✅ 完善的错误处理和日志记录
+- ✅ 链式调用 API 设计
+- ✅ 完整的错误处理
 
 ## 安装
 
@@ -116,53 +117,6 @@ apis = client.list_exchange_apis(
 )
 ```
 
-#### 添加交易所 API
-
-添加新的交易所 API 账户。
-
-**请求参数：**
-- `accountName` (str) - 账户名称，必填
-- `exchange` (str) - 交易所名称（如：Binance、OKX、Bybit），必填
-- `apiKey` (str) - 交易所 API Key，必填
-- `apiSecret` (str) - 交易所 API Secret，必填
-- `passphrase` (str) - API 密码短语（部分交易所需要），可选
-- `verificationMethod` (str) - API 验证方式（如：OAuth、API），可选
-- `enableTrading` (bool) - 是否开启交易权限，可选
-
-**响应字段：**
-- `id` - 新创建的 API ID
-- `success` - 添加是否成功
-- `message` - 操作结果消息
-
-**示例代码：**
-
-```python
-# 添加币安 API
-result = client.add_exchange_api(
-    accountName="我的币安账户",
-    exchange="binance",
-    apiKey="your-exchange-api-key",
-    apiSecret="your-exchange-api-secret",
-    enableTrading=True  # 启用交易权限
-)
-
-if result['success']:
-    print(f"API Key 添加成功，ID: {result['id']}")
-else:
-    print(f"API Key 添加失败：{result['message']}")
-
-# 添加 OKX API（需要 passphrase）
-result = client.add_exchange_api(
-    accountName="我的 OKX 账户",
-    exchange="okx",
-    apiKey="your-okx-api-key",
-    apiSecret="your-okx-api-secret",
-    passphrase="your-okx-passphrase",
-    verificationMethod="API",
-    enableTrading=True
-)
-```
-
 ### 交易订单管理
 
 #### 创建主订单
@@ -170,36 +124,47 @@ result = client.add_exchange_api(
 创建新的主订单并提交到算法侧执行。
 
 **请求参数：**
-- `algorithm` (str) - 交易算法（如：VWAP、TWAP），必填
-- `algorithmType` (str) - 算法分类，暂时固定传 "TIME_WEIGHTED"，必填
-- `exchange` (str) - 交易所名称（如：Binance、OKX），必填
-- `symbol` (str) - 交易对符号（如：BTCUSDT），必填
-- `marketType` (str) - 市场类型（SPOT:现货, FUTURES:合约），必填
-- `side` (str) - 买卖方向（BUY:买入, SELL:卖出），必填
-- `apiKeyId` (str) - 指定使用的 API 密钥 ID，必填
-- `totalQuantity` (float) - 要交易的总数量（按币值时使用），与 orderNotional 二选一
-- `orderNotional` (float) - 按价值下单时的金额（USDT），与 totalQuantity 二选一
-- `strategyType` (str) - 策略类型（如：AGGRESSIVE、PASSIVE），可选
-- `startTime` (str) - 开始执行时间（ISO 8601格式），可选
-- `endTime` (str) - 结束时间（ISO 8601格式），TWAP-2 时必填
-- `executionDuration` (int) - 执行时长（秒），TWAP-1 时必填
-- `worstPrice` (float) - 最差成交价，必须完成为 true 时可选
-- `limitPriceString` (str) - 限价字符串，超出范围停止交易，填 "-1" 不限制
-- `upTolerance` (str) - 允许超出 schedule 的容忍度（如 "0.1" 表示 10%）
-- `lowTolerance` (str) - 允许落后 schedule 的容忍度
-- `strictUpBound` (bool) - 是否严格小于 upTolerance，不建议开启
-- `mustComplete` (bool) - 是否必须在 duration 内执行完，默认 true
-- `makerRateLimit` (float) - 要求 maker 占比超过该值（0-1）
-- `povLimit` (float) - 占市场成交量比例限制（0-1）
-- `marginType` (str) - 合约交易保证金类型（CROSS:全仓, ISOLATED:逐仓）
-- `reduceOnly` (bool) - 合约交易时是否仅减仓，默认 false
-- `notes` (str) - 订单备注，可选
-- `clientId` (str) - 客户端唯一标识符，可选
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|--------|------|
+| **基础参数** |
+| algorithm | string | 是 | 交易算法，可选值：TWAP、VWAP、POV |
+| exchange | string | 是 | 交易所名称，可选值：Binance |
+| symbol | string | 是 | 交易对符号（如：BTCUSDT） |
+| marketType | string | 是 | 市场类型，可选值：SPOT（现货）、PERP（合约） |
+| side | string | 是 | 买卖方向，可选值：buy（买入）、sell（卖出） |
+| apiKeyId | string | 是 | 指定使用的 API 密钥 ID |
+| **数量参数（二选一）** |
+| totalQuantity | string | 否* | 要交易的总数量，支持字符串表示以避免精度问题，与 orderNotional 二选一，范围：>0 |
+| orderNotional | string | 否* | 按价值下单时的金额，以计价币种为单位（如ETHUSDT为USDT数量），与 totalQuantity 二选一，范围：>0 |
+| **时间参数** |
+| startTime | string | 否 | 开始执行时间（ISO 8601格式） |
+| executionDuration | int | 否 | 订单的有效时间（分钟），范围：>1 |
+| **TWAP/VWAP 算法参数** |
+| mustComplete | bool | 否 | 是否一定要在duration之内执行完，选false则不会追进度，默认：true |
+| makerRateLimit | string | 否 | 要求maker占比超过该值（优先级低于mustcomplete），范围：0-1，默认："0" |
+| povLimit | string | 否 | 占市场成交量比例限制，优先级低于mustcomplete，范围：0-1，默认："0.8" |
+| limitPrice | string | 否 | 最高/低允许交易的价格，买的话就是最高价，卖就是最低价，超出范围停止交易，填"-1"不限制，范围：>0，默认："-1" |
+| upTolerance | string | 否 | 允许超出schedule的容忍度，比如0.1就是执行过程中允许比目标进度超出母单数量的10%，范围：>0且<1，默认：-1 |
+| lowTolerance | string | 否 | 允许落后schedule的容忍度，范围：>0且<1，默认：-1 |
+| strictUpBound | bool | 否 | 是否追求严格小于uptolerance，开启后可能会把很小的母单也拆的很细，不建议开启，默认：false |
+| tailOrderProtection | bool | 否 | 尾单必须taker扫完，如果false则允许省一点，小于交易所最小发单量，默认：true |
+| **POV 算法参数** |
+| povMinLimit | string | 否 | 占市场成交量比例下限，范围：小于max(POVLimit-0.01,0)，默认："0" |
+| **其他参数** |
+| reduceOnly | bool | 否 | 合约交易时是否仅减仓，默认：false |
+| marginType | string | 否 | 合约交易保证金类型，可选值：U（U本位） |
+| notes | string | 否 | 订单备注 |
+
+*注：totalQuantity 和 orderNotional 必须传其中一个  
 
 **响应字段：**
-- `masterOrderId` - 创建成功的主订单 ID
-- `success` - 创建是否成功
-- `message` - 创建结果消息
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| masterOrderId | string | 创建成功的主订单 ID |
+| success | bool | 创建是否成功 |
+| message | string | 创建结果消息 |
 
 **示例代码：**
 
@@ -207,48 +172,49 @@ result = client.add_exchange_api(
 # TWAP 订单示例 - 在 30 分钟内分批买入价值 $10,000 的 BTC
 response = client.create_master_order(
     algorithm="TWAP",
-    algorithmType="TIME_WEIGHTED",
-    exchange="binance",
+    exchange="Binance",
     symbol="BTCUSDT",
     marketType="SPOT",
-    side="BUY",
+    side="buy",
     apiKeyId="your-api-key-id",  # 从 list_exchange_apis 获取
-    orderNotional=10000,          # $10,000 名义价值
+    orderNotional="10000",       # $10,000 名义价值
     startTime="2024-01-01T10:00:00Z",
-    endTime="2024-01-01T10:30:00Z",
-    executionDuration="1800",     # 30 分钟 = 1800 秒
-    mustComplete=True,            # 必须完成全部订单
-    worstPrice=60000,            # 最差价格 $60,000
-    upTolerance="0.1",           # 允许超出 10%
-    lowTolerance="0.1",          # 允许落后 10%
-    strictUpBound=False,         # 不严格限制上界
-    clientId="my-order-001",     # 自定义订单 ID
-    notes="测试 TWAP 订单"       # 订单备注
+    executionDuration=30,        # 30 分钟
+    mustComplete=True,           # 必须完成全部订单
+    limitPrice="60000",         # 最高价格 $60,000
+    upTolerance="0.1",          # 允许超出 10%
+    lowTolerance="0.1",         # 允许落后 10%
+    tailOrderProtection=True,   # 尾单保护
+    notes="测试 TWAP 订单"      # 订单备注
 )
 
 if response.get('success'):
     print(f"主订单创建成功，ID: {response['masterOrderId']}")
 else:
     print(f"创建失败：{response.get('message')}")
+```
 
+**POV 算法示例：**
 
-# 使用限价字符串的示例
+```python
+# POV 订单示例 - 按市场成交量比例买入 BTC
 response = client.create_master_order(
-    algorithm="TWAP",
-    algorithmType="TIME_WEIGHTED",
-    exchange="binance",
+    algorithm="POV",
+    exchange="Binance",
     symbol="BTCUSDT",
     marketType="SPOT",
-    side="BUY",
+    side="buy",
     apiKeyId="your-api-key-id",
-    orderNotional=5000,
-    executionDuration="1800",
-    limitPriceString="50000",    # 限价 $50,000（字符串格式）
-    upTolerance="0.05",          # 允许超出 5%
-    lowTolerance="0.1",          # 允许落后 10%
-    strictUpBound=False,         # 关闭严格上界限制
-    mustComplete=True
+    totalQuantity="1.5",        # 买入 1.5 BTC
+    executionDuration=60,       # 60 分钟
+    povLimit="0.1",            # 占市场成交量 10%
+    povMinLimit="0.05",        # 最低占市场成交量 5%
+    limitPrice="65000",        # 最高价格 $65,000
+    tailOrderProtection=True
 )
+
+if response.get('success'):
+    print(f"POV 订单创建成功，ID: {response['masterOrderId']}")
 ```
 
 #### 查询主订单列表
@@ -256,59 +222,65 @@ response = client.create_master_order(
 获取用户的主订单列表。
 
 **请求参数：**
-- `page` (int) - 页码，可选
-- `pageSize` (int) - 每页数量，可选
-- `status` (str) - 订单状态筛选，可选
-- `exchange` (str) - 交易所名称筛选，可选
-- `symbol` (str) - 交易对筛选，可选
-- `startTime` (str) - 开始时间筛选，可选
-- `endTime` (str) - 结束时间筛选，可选
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| page | int32 | 否 | 页码 |
+| pageSize | int32 | 否 | 每页数量 |
+| status | string | 否 | 订单状态筛选，可选值：NEW（执行中）、COMPLETED（已完成） |
+| exchange | string | 否 | 交易所名称筛选 |
+| symbol | string | 否 | 交易对筛选 |
+| startTime | string | 否 | 开始时间筛选 |
+| endTime | string | 否 | 结束时间筛选 |
 
 **响应字段：**
-- `items` - 主订单列表，每个订单包含：
-  - `masterOrderId` - 主订单 ID
-  - `algorithm` - 算法
-  - `algorithmType` - 算法类型
-  - `exchange` - 交易所
-  - `symbol` - 交易对
-  - `marketType` - 市场类型
-  - `side` - 买卖方向
-  - `totalQuantity` - 总数量
-  - `filledQuantity` - 已成交数量
-  - `averagePrice` - 平均成交价
-  - `status` - 状态
-  - `executionDuration` - 执行时长（秒）
-  - `priceLimit` - 价格限制
-  - `startTime` - 开始时间
-  - `endTime` - 结束时间
-  - `createdAt` - 创建时间
-  - `updatedAt` - 更新时间
-  - `notes` - 备注
-  - `marginType` - 保证金类型（U:U本位, C:币本位）
-  - `reduceOnly` - 是否仅减仓
-  - `strategyType` - 策略类型
-  - `orderNotional` - 订单金额（USDT）
-  - `mustComplete` - 是否必须完成
-  - `makerRateLimit` - 最低 Maker 率
-  - `povLimit` - 最大市场成交量占比
-  - `clientId` - 客户端 ID
-  - `date` - 发单日期（格式：YYYYMMDD）
-  - `ticktimeInt` - 发单时间（格式：093000000 表示 9:30:00.000）
-  - `limitPriceString` - 限价（字符串）
-  - `upTolerance` - 上容忍度
-  - `lowTolerance` - 下容忍度
-  - `strictUpBound` - 严格上界
-  - `ticktimeMs` - 发单时间戳（epoch 毫秒）
-  - `category` - 交易品种（spot 或 perp）
-  - `filledAmount` - 成交金额
-  - `totalValue` - 成交总值
-  - `base` - 基础币种
-  - `quote` - 计价币种
-  - `completionProgress` - 完成进度（0-1）
-  - `reason` - 原因（如取消原因）
-- `total` - 总数
-- `page` - 当前页码
-- `pageSize` - 每页数量
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| items | array | 主订单列表 |
+| ├─ masterOrderId | string | 主订单 ID |
+| ├─ algorithm | string | 算法 |
+| ├─ algorithmType | string | 算法类型 |
+| ├─ exchange | string | 交易所 |
+| ├─ symbol | string | 交易对 |
+| ├─ marketType | string | 市场类型 |
+| ├─ side | string | 买卖方向 |
+| ├─ totalQuantity | string | 总数量 |
+| ├─ filledQuantity | string | 已成交数量 |
+| ├─ averagePrice | float64 | 平均成交价 |
+| ├─ status | string | 状态：NEW（创建，未执行）、WAITING（等待中）、PROCESSING（执行中，且未完成）、PAUSED（已暂停）、CANCEL（取消中）、CANCELLED（已取消）、COMPLETED（已完成）、REJECTED（已拒绝）、EXPIRED（已过期）、CANCEL_REJECT（取消被拒绝） |
+| ├─ executionDuration | int32 | 执行时长（分钟） |
+| ├─ priceLimit | float64 | 价格限制 |
+| ├─ startTime | string | 开始时间 |
+| ├─ endTime | string | 结束时间 |
+| ├─ createdAt | string | 创建时间 |
+| ├─ updatedAt | string | 更新时间 |
+| ├─ notes | string | 备注 |
+| ├─ marginType | string | 保证金类型（U:U本位） |
+| ├─ reduceOnly | bool | 是否仅减仓 |
+| ├─ strategyType | string | 策略类型 |
+| ├─ orderNotional | string | 订单金额（USDT） |
+| ├─ mustComplete | bool | 是否必须完成 |
+| ├─ makerRateLimit | string | 最低 Maker 率 |
+| ├─ povLimit | string | 最大市场成交量占比 |
+| ├─ clientId | string | 客户端 ID |
+| ├─ date | string | 发单日期（格式：YYYYMMDD） |
+| ├─ ticktimeInt | string | 发单时间（格式：093000000 表示 9:30:00.000） |
+| ├─ limitPriceString | string | 限价（字符串） |
+| ├─ upTolerance | string | 上容忍度 |
+| ├─ lowTolerance | string | 下容忍度 |
+| ├─ strictUpBound | bool | 严格上界 |
+| ├─ ticktimeMs | int64 | 发单时间戳（epoch 毫秒） |
+| ├─ category | string | 交易品种（spot 或 perp） |
+| ├─ filledAmount | float64 | 成交金额 |
+| ├─ totalValue | float64 | 成交总值 |
+| ├─ base | string | 基础币种 |
+| ├─ quote | string | 计价币种 |
+| ├─ completionProgress | float64 | 完成进度（0-1） |
+| ├─ reason | string | 原因（如取消原因） |
+| total | int32 | 总数 |
+| page | int32 | 当前页码 |
+| pageSize | int32 | 每页数量 |
 
 **示例代码：**
 
@@ -320,7 +292,7 @@ orders = client.get_master_orders()
 orders = client.get_master_orders(
     page=1,
     pageSize=20,
-    status="NEW",              # 活跃订单
+    status="NEW",              # 执行中的订单
     symbol="BTCUSDT",
     startTime="2024-01-01T00:00:00Z",
     endTime="2024-01-31T23:59:59Z"
@@ -329,31 +301,21 @@ orders = client.get_master_orders(
 # 打印订单详细信息
 for order in orders['items']:
     print(f"""
-订单详情：
+订单信息：
     ID: {order['masterOrderId']}
     算法: {order['algorithm']} ({order.get('strategyType', 'N/A')})
-    交易对: {order['symbol']} ({order['marketType']})
+    交易对: {order['symbol']} {order['marketType']}
     方向: {order['side']}
     状态: {order['status']}
     完成度: {order['completionProgress'] * 100:.2f}%
     平均价格: ${order.get('averagePrice', 0):.2f}
-    已成交: {order['filledQuantity']:.4f} / {order['totalQuantity']:.4f}
+    已成交: {order['filledQuantity']} / {order['totalQuantity']}
     成交金额: ${order.get('filledAmount', 0):.2f}
     创建时间: {order['createdAt']}
     发单日期: {order.get('date', 'N/A')}
-    限价: {order.get('limitPriceString', '-1')}
     上容忍度: {order.get('upTolerance', 'N/A')}
     下容忍度: {order.get('lowTolerance', 'N/A')}
-    严格上界: {order.get('strictUpBound', False)}
-    客户端ID: {order.get('clientId', 'N/A')}
-    备注: {order.get('notes', '')}
     """)
-
-# 统计信息
-total_orders = len(orders['items'])
-active_orders = sum(1 for o in orders['items'] if o['status'] == 'ACTIVE')
-completed_orders = sum(1 for o in orders['items'] if o['status'] == 'COMPLETED')
-print(f"\n统计：总订单 {total_orders}，活跃 {active_orders}，已完成 {completed_orders}")
 ```
 
 #### 查询成交记录
@@ -361,37 +323,43 @@ print(f"\n统计：总订单 {total_orders}，活跃 {active_orders}，已完成
 获取用户的成交记录。
 
 **请求参数：**
-- `page` (int) - 页码，可选
-- `pageSize` (int) - 每页数量，可选
-- `masterOrderId` (str) - 主订单 ID 筛选，可选
-- `subOrderId` (str) - 子订单 ID 筛选，可选
-- `symbol` (str) - 交易对筛选，可选
-- `startTime` (str) - 开始时间筛选，可选
-- `endTime` (str) - 结束时间筛选，可选
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| page | int32 | 否 | 页码 |
+| pageSize | int32 | 否 | 每页数量 |
+| masterOrderId | string | 否 | 主订单 ID 筛选 |
+| subOrderId | string | 否 | 子订单 ID 筛选 |
+| symbol | string | 否 | 交易对筛选 |
+| startTime | string | 否 | 开始时间筛选 |
+| endTime | string | 否 | 结束时间筛选 |
 
 **响应字段：**
-- `items` - 成交记录列表，每条记录包含：
-  - `id` - 记录 ID
-  - `orderCreatedTime` - 订单创建时间
-  - `masterOrderId` - 主订单 ID
-  - `exchange` - 交易所
-  - `category` - 市场类型
-  - `symbol` - 交易对
-  - `side` - 方向
-  - `filledValue` - 成交价值
-  - `filledQuantity` - 成交数量
-  - `avgPrice` - 平均价格
-  - `price` - 成交价格
-  - `fee` - 手续费
-  - `tradingAccount` - 交易账户
-  - `status` - 状态
-  - `rejectReason` - 拒绝原因
-  - `base` - 基础币种
-  - `quote` - 计价币种
-  - `type` - 订单类型
-- `total` - 总数
-- `page` - 当前页码
-- `pageSize` - 每页数量
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| items | array | 成交记录列表 |
+| ├─ id | string | 记录 ID |
+| ├─ orderCreatedTime | string | 订单创建时间 |
+| ├─ masterOrderId | string | 主订单 ID |
+| ├─ exchange | string | 交易所 |
+| ├─ category | string | 市场类型 |
+| ├─ symbol | string | 交易对 |
+| ├─ side | string | 方向 |
+| ├─ filledValue | float64 | 成交价值 |
+| ├─ filledQuantity | string | 成交数量 |
+| ├─ avgPrice | float64 | 平均价格 |
+| ├─ price | float64 | 成交价格 |
+| ├─ fee | float64 | 手续费 |
+| ├─ tradingAccount | string | 交易账户 |
+| ├─ status | string | 状态 |
+| ├─ rejectReason | string | 拒绝原因 |
+| ├─ base | string | 基础币种 |
+| ├─ quote | string | 计价币种 |
+| ├─ type | string | 订单类型 |
+| total | int32 | 总数 |
+| page | int32 | 当前页码 |
+| pageSize | int32 | 每页数量 |
 
 **示例代码：**
 
@@ -410,38 +378,26 @@ fills = client.get_order_fills(
     endTime="2024-01-01T23:59:59Z"
 )
 
-# 分析成交数据
+# 统计成交信息
 total_value = 0
 total_fee = 0
-fill_types = {}
-
 for fill in fills['items']:
     print(f"""
-成交记录：
+成交详情：
     时间: {fill['orderCreatedTime']}
-    交易对: {fill['symbol']} ({fill['category']})
+    交易对: {fill['symbol']}
     方向: {fill['side']}
     成交价格: ${fill['price']:.2f}
-    成交数量: {fill['filledQuantity']:.6f}
+    成交数量: {fill['filledQuantity']}
     成交金额: ${fill['filledValue']:.2f}
     手续费: ${fill['fee']:.4f}
     账户: {fill['tradingAccount']}
     类型: {fill.get('type', 'N/A')}
-    状态: {fill['status']}
     """)
-    
     total_value += fill['filledValue']
     total_fee += fill['fee']
-    
-    # 统计订单类型
-    order_type = fill.get('type', 'Unknown')
-    fill_types[order_type] = fill_types.get(order_type, 0) + 1
 
-print(f"\n成交统计：")
-print(f"总成交额: ${total_value:.2f}")
-print(f"总手续费: ${total_fee:.2f}")
-print(f"手续费率: {(total_fee/total_value*100):.3f}%")
-print(f"订单类型分布: {fill_types}")
+print(f"总成交额: ${total_value:.2f}, 总手续费: ${total_fee:.2f}")
 ```
 
 #### 取消主订单
@@ -449,12 +405,18 @@ print(f"订单类型分布: {fill_types}")
 取消指定的主订单。
 
 **请求参数：**
-- `masterOrderId` (str) - 要取消的主订单 ID，必填
-- `reason` (str) - 取消原因，可选
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| masterOrderId | string | 是 | 要取消的主订单 ID |
+| reason | string | 否 | 取消原因 |
 
 **响应字段：**
-- `success` - 取消是否成功
-- `message` - 取消结果消息
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| success | bool | 取消是否成功 |
+| message | string | 取消结果消息 |
 
 **示例代码：**
 
@@ -494,507 +456,272 @@ def cancel_all_active_orders(client):
     return cancelled_count
 ```
 
+#### 创建 ListenKey
+
+创建一个随机的UUID作为ListenKey，绑定当前用户信息，有效期24小时。ListenKey用于WebSocket连接，可以实时接收用户相关的交易数据推送。
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| 无需参数 | - | - | - |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| listenKey | string | 生成的ListenKey |
+| expireAt | string | ListenKey过期时间戳（秒） |
+| success | bool | 创建是否成功 |
+| message | string | 创建结果消息 |
+
+**示例代码：**
+
+```python
+# 创建 ListenKey
+result = client.create_listen_key()
+
+if result.get('success'):
+    print(f"ListenKey创建成功:")
+    print(f"ListenKey: {result['listenKey']}")
+    print(f"过期时间: {result['expireAt']}")
+    
+    # 使用 ListenKey 建立 WebSocket 连接
+    # ws_url = f"wss://api.quantumexecute.com/ws/{result['listenKey']}"
+else:
+    print(f"ListenKey创建失败：{result.get('message')}")
+```
+
+**注意事项：**
+- ListenKey 有效期为 24 小时，过期后需要重新创建
+- 每个用户同时只能有一个有效的 ListenKey
+- ListenKey 用于 WebSocket 连接，可以实时接收交易数据推送
+- 建议在应用启动时创建 ListenKey，并在接近过期时重新创建
+
 ## 错误处理
 
-SDK 提供了详细的错误类型，方便进行精确的错误处理：
+SDK 提供了详细的错误信息，包括 API 错误和网络错误：
 
 ```python
 from qe.error import ClientError, APIError
 
-try:
-    response = client.create_master_order(
-        # ... 订单参数
-    )
-except APIError as error:
-    # API 返回的业务错误
-    print(f"API 错误 - 代码: {error.code}, 原因: {error.reason}, 消息: {error.message}")
-    print(f"追踪 ID: {error.trace_id}")  # 用于技术支持
-    
-    # 根据错误代码处理
-    if error.code == 400:
-        print("请求参数错误，请检查输入")
-    elif error.code == 401:
-        print("认证失败，请检查 API 密钥")
-    elif error.code == 403:
-        print("权限不足")
-    elif error.code == 429:
-        print("请求过于频繁，请稍后重试")
+response = client.create_master_order(
+    # ... 设置参数
+)
+
+if 'error' in response:
+    # 检查是否为 API 错误
+    error = response['error']
+    if isinstance(error, dict) and 'code' in error:
+        print(f"API 错误 - 代码: {error['code']}, 原因: {error.get('reason')}, 消息: {error.get('message')}")
+        print(f"TraceID: {error.get('trace_id')}")
         
-except ClientError as error:
-    # 客户端错误（如参数错误、网络错误等）
-    print(f"客户端错误 - 状态码: {error.status_code}, 错误消息: {error.error_message}")
-    
-except Exception as error:
-    # 其他未预期的错误
-    print(f"未知错误: {error}")
+        # 根据错误代码处理
+        if error['code'] == 400:
+            print("请求参数错误")
+        elif error['code'] == 401:
+            print("认证失败")
+        elif error['code'] == 403:
+            print("权限不足")
+        elif error['code'] == 429:
+            print("请求过于频繁")
+        else:
+            print(f"其他错误: {error}")
+    else:
+        print(f"网络或其他错误: {error}")
 ```
 
 ## 高级配置
 
-### 配置超时和代理
+### 自定义 HTTP 客户端
 
 ```python
-client = Client(
-    api_key="your-api-key",
-    api_secret="your-api-secret",
-    timeout=30,  # 30 秒超时
-    proxies={
-        'https': 'http://proxy.example.com:8080'
-    }
-)
-```
-
-### 使用 RSA 或 Ed25519 签名
-
-```python
-# 使用 RSA 私钥
-with open('private_key.pem', 'r') as f:
-    private_key = f.read()
-
-client = Client(
-    api_key="your-api-key",
-    private_key=private_key,
-    private_key_pass="your-password"  # 如果私钥有密码
-)
-
-# 使用 Ed25519 私钥
-with open('ed25519_key.pem', 'r') as f:
-    ed25519_key = f.read()
-
-client = Client(
-    api_key="your-api-key",
-    private_key=ed25519_key
-)
-```
-
-### 显示请求限制使用情况
-
-```python
-client = Client(
-    api_key="your-api-key",
-    api_secret="your-api-secret",
-    show_limit_usage=True,
-    show_header=True
-)
-
-# API 响应将包含限制信息
-response = client.get_master_orders()
-if isinstance(response, dict) and 'limit_usage' in response:
-    print(f"限制使用情况: {response['limit_usage']}")
-    print(f"实际数据: {response['data']}")
-```
-
-### 配置日志
-
-```python
-import logging
-from qe.lib.utils import config_logging
-
-# 配置详细日志
-config_logging(logging, logging.DEBUG)
-
-# 只记录警告和错误
-config_logging(logging, logging.WARNING)
-```
-
-## 完整示例
-
-### 完整的交易流程示例
-
-```python
-import logging
-from qe.user import User as Client
-from qe.error import ClientError, APIError
-from qe.lib.utils import config_logging
+import requests
 import time
-from datetime import datetime, timedelta
 
-# 配置日志
-config_logging(logging, logging.INFO)
-logger = logging.getLogger(__name__)
+# 创建自定义 HTTP 客户端
+session = requests.Session()
+session.timeout = 30  # 30 秒超时
+session.headers.update({
+    'User-Agent': 'QE-Python-SDK/1.0.0'
+})
 
-# 初始化客户端
 client = Client("your-api-key", "your-api-secret")
-
-try:
-    # 1. 获取可用的 API 密钥
-    apis = client.list_exchange_apis(exchange="binance")
-    if not apis['items']:
-        logger.error("没有找到可用的币安 API 密钥")
-        exit(1)
-    
-    # 选择余额最高的账户
-    api_info = max(apis['items'], key=lambda x: x.get('balance', 0))
-    api_key_id = api_info['id']
-    logger.info(f"使用 API 密钥: {api_key_id}, 账户: {api_info['accountName']}, 余额: ${api_info['balance']:.2f}")
-    
-    # 2. 创建 TWAP 订单
-    start_time = datetime.utcnow().isoformat() + 'Z'
-    end_time = (datetime.utcnow() + timedelta(minutes=10)).isoformat() + 'Z'
-    
-    order_response = client.create_master_order(
-        algorithm="TWAP",
-        algorithmType="TIME_WEIGHTED",
-        exchange="binance",
-        symbol="BTCUSDT",
-        marketType="SPOT",
-        side="BUY",
-        apiKeyId=api_key_id,
-        orderNotional=1000,           # $1000
-        startTime=start_time,
-        endTime=end_time,
-        executionDuration="30",       # 每 30 秒执行一次
-        mustComplete=True,
-        worstPrice=70000,            # 最差价格 $70,000
-        upTolerance="0.05",          # 允许超出 5%
-        lowTolerance="0.05",         # 允许落后 5%
-        strictUpBound=False,
-        clientId=f"test_order_{int(time.time())}",
-        notes="Python SDK 测试订单"
-    )
-    
-    if not order_response.get('success'):
-        logger.error(f"创建订单失败: {order_response.get('message')}")
-        exit(1)
-    
-    master_order_id = order_response['masterOrderId']
-    logger.info(f"订单创建成功，ID: {master_order_id}")
-    
-    # 3. 监控订单状态
-    previous_progress = 0
-    while True:
-        orders = client.get_master_orders(
-            page=1,
-            pageSize=1,
-            status="ACTIVE"
-        )
-        
-        if not orders['items']:
-            logger.info("订单已完成或取消")
-            break
-        
-        order = orders['items'][0]
-        current_progress = order['completionProgress'] * 100
-        
-        # 只在进度变化时打印
-        if current_progress != previous_progress:
-            logger.info(f"订单进度: {current_progress:.2f}%, "
-                       f"已成交: {order['filledQuantity']:.6f}/{order['totalQuantity']:.6f}, "
-                       f"平均价格: ${order.get('averagePrice', 0):.2f}")
-            previous_progress = current_progress
-        
-        # 检查是否需要取消（演示用）
-        if current_progress > 50:  # 完成超过 50%
-            logger.info("演示：取消订单")
-            cancel_response = client.cancel_master_order(
-                masterOrderId=master_order_id,
-                reason="演示取消"
-            )
-            if cancel_response.get('success'):
-                logger.info("订单已取消")
-            break
-        
-        time.sleep(10)  # 每 10 秒检查一次
-    
-    # 4. 获取最终成交明细
-    fills = client.get_order_fills(masterOrderId=master_order_id)
-    logger.info(f"总成交笔数: {fills['total']}")
-    
-    total_value = 0
-    total_fee = 0
-    for fill in fills['items']:
-        logger.info(f"成交: {fill['side']} {fill['filledQuantity']:.6f} {fill['symbol']} "
-                   f"@ ${fill['price']:.2f}, 手续费: ${fill['fee']:.4f}")
-        total_value += fill['filledValue']
-        total_fee += fill['fee']
-    
-    if total_value > 0:
-        logger.info(f"\n成交总结：")
-        logger.info(f"总成交额: ${total_value:.2f}")
-        logger.info(f"总手续费: ${total_fee:.2f}")
-        logger.info(f"手续费率: {(total_fee/total_value*100):.3f}%")
-
-except APIError as error:
-    logger.error(f"API 错误: {error}")
-except ClientError as error:
-    logger.error(f"客户端错误: {error}")
-except Exception as error:
-    logger.error(f"未知错误: {error}")
+client.session = session
 ```
 
-### 策略执行示例
+### 使用代理
 
 ```python
-def execute_vwap_strategy(client, symbol, amount_usd, duration_hours=8):
-    """执行 VWAP 策略"""
-    logger = logging.getLogger(__name__)
-    
-    try:
-        # 获取默认 API
-        apis = client.list_exchange_apis(exchange="binance")
-        default_api = next((api for api in apis['items'] if api.get('isDefault')), None)
-        
-        if not default_api:
-            raise ValueError("没有找到默认的币安 API")
-        
-        # 创建 VWAP 订单
-        start_time = datetime.utcnow().isoformat() + 'Z'
-        end_time = (datetime.utcnow() + timedelta(hours=duration_hours)).isoformat() + 'Z'
-        
-        response = client.create_master_order(
-            algorithm="VWAP",
-            algorithmType="VOLUME_WEIGHTED",
-            exchange="binance",
-            symbol=symbol,
-            marketType="SPOT",
-            side="BUY",
-            apiKeyId=default_api['id'],
-            orderNotional=amount_usd,
-            startTime=start_time,
-            endTime=end_time,
-            strategyType="PASSIVE",      # 被动策略，减少市场影响
-            makerRateLimit=0.5,          # 50% Maker 订单
-            povLimit=0.05,               # 最多占市场成交量 5%
-            mustComplete=False,          # 不强制完成，避免滑点
-            upTolerance="0.02",          # 2% 容忍度
-            lowTolerance="0.05",         # 5% 容忍度
-            notes=f"VWAP 策略 - {symbol}"
-        )
-        
-        if response.get('success'):
-            logger.info(f"VWAP 订单创建成功: {response['masterOrderId']}")
-            return response['masterOrderId']
-        else:
-            raise ValueError(f"订单创建失败: {response.get('message')}")
-            
-    except Exception as e:
-        logger.error(f"执行 VWAP 策略失败: {str(e)}")
-        raise
+import requests
 
-# 使用示例
-master_order_id = execute_vwap_strategy(
-    client,
-    symbol="ETHUSDT",
-    amount_usd=5000,
-    duration_hours=6
-)
+proxies = {
+    'https': 'http://proxy.example.com:8080'
+}
+
+client = Client("your-api-key", "your-api-secret")
+client.session.proxies.update(proxies)
 ```
 
-## API 文档
+### 时间偏移调整
 
-完整的 API 文档请参考 [Quantum Execute API 文档](https://docs.quantumexecute.com)
+如果遇到时间戳错误，可以调整客户端的时间偏移：
 
-## 支持的算法类型
+```python
+# 设置时间偏移（毫秒）
+client.time_offset = 1000  # 客户端时间比服务器快 1 秒
+```
 
-- **TWAP (Time Weighted Average Price)**: 时间加权平均价格算法，在指定时间段内平均分配订单
-- **VWAP (Volume Weighted Average Price)**: 成交量加权平均价格算法，根据市场成交量分布执行订单
-- **POV (Percentage of Volume)**: 成交量百分比算法，保持占市场成交量的固定比例
-- **IMPLEMENTATION_SHORTFALL**: 执行缺口算法，最小化执行成本
+### 请求重试
+
+```python
+import time
+import math
+
+# 实现简单的重试逻辑
+def retry_request(func, max_retries=3):
+    """重试请求函数"""
+    for i in range(max_retries):
+        try:
+            return func()
+        except Exception as e:
+            if i == max_retries - 1:
+                raise e
+            
+            # 检查是否应该重试
+            if hasattr(e, 'code') and 400 <= e.code < 500:
+                raise e  # 不重试客户端错误
+            
+            # 指数退避
+            wait_time = math.pow(2, i)
+            print(f"请求失败，{wait_time}秒后重试...")
+            time.sleep(wait_time)
+
+# 使用重试
+def create_order_with_retry():
+    return client.create_master_order(
+        # ... 设置参数
+    )
+
+result = retry_request(create_order_with_retry, max_retries=3)
+```
 
 ## 最佳实践
 
 ### 1. API 密钥管理
 
 ```python
-def check_api_health(client):
-    """检查 API 密钥健康状态"""
+# 定期检查 API 密钥状态
+def check_api_key_status(client):
     apis = client.list_exchange_apis()
+    if not apis.get('items'):
+        print("获取 API 列表失败")
+        return
     
     for api in apis['items']:
         if not api['isValid']:
-            print(f"⚠️  警告: API '{api['accountName']}' 状态异常")
-        
+            print(f"警告: API {api['id']} ({api['accountName']}) 状态异常")
         if api['balance'] < 100:
-            print(f"⚠️  警告: 账户 '{api['accountName']}' 余额不足 (${api['balance']:.2f})")
+            print(f"警告: 账户 {api['accountName']} 余额不足 (${api['balance']:.2f})")
+```
+
+### 2. 订单监控
+
+```python
+# 监控订单执行状态
+def monitor_order(client, master_order_id):
+    import time
+    
+    while True:
+        orders = client.get_master_orders(page=1, pageSize=1)
         
-        if not api['isTradingEnabled']:
-            print(f"ℹ️  提示: API '{api['accountName']}' 未开启交易权限")
+        if not orders['items']:
+            print("订单不存在")
+            return
+        
+        order = orders['items'][0]
+        print(f"订单进度: {order['completionProgress']*100:.2f}%, 状态: {order['status']}")
+        
+        if order['status'] == "COMPLETED":
+            print(f"订单已结束，最终状态: {order['status']}")
+            return
+        
+        time.sleep(10)  # 每 10 秒检查一次
 ```
 
-### 2. 订单参数验证
+### 3. 批量处理
 
 ```python
-def validate_order_params(params):
-    """验证订单参数"""
-    errors = []
-    
-    # 必填参数检查
-    required = ['algorithm', 'exchange', 'symbol', 'marketType', 'side', 'apiKeyId']
-    for field in required:
-        if not params.get(field):
-            errors.append(f"缺少必填参数: {field}")
-    
-    # 数量验证
-    if not params.get('totalQuantity') and not params.get('orderNotional'):
-        errors.append("必须指定 totalQuantity 或 orderNotional")
-    
-    # 时间验证
-    if params.get('startTime') and params.get('endTime'):
-        start = datetime.fromisoformat(params['startTime'].rstrip('Z'))
-        end = datetime.fromisoformat(params['endTime'].rstrip('Z'))
-        if start >= end:
-            errors.append("开始时间必须早于结束时间")
-    
-    # 容忍度验证
-    for field in ['upTolerance', 'lowTolerance']:
-        if field in params:
-            try:
-                val = float(params[field])
-                if val < 0 or val > 1:
-                    errors.append(f"{field} 必须在 0-1 之间")
-            except ValueError:
-                errors.append(f"{field} 必须是有效的数字")
-    
-    return errors
-```
-
-### 3. 重试机制
-
-```python
-import time
-from functools import wraps
-
-def retry_on_error(max_retries=3, delay=1):
-    """装饰器：自动重试失败的请求"""
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            last_error = None
-            for attempt in range(max_retries):
-                try:
-                    return func(*args, **kwargs)
-                except APIError as e:
-                    last_error = e
-                    # 不重试客户端错误
-                    if 400 <= e.code < 500:
-                        raise
-                    # 服务器错误，等待后重试
-                    if attempt < max_retries - 1:
-                        wait_time = delay * (2 ** attempt)  # 指数退避
-                        logger.warning(f"请求失败，{wait_time}秒后重试...")
-                        time.sleep(wait_time)
-                except Exception as e:
-                    last_error = e
-                    if attempt < max_retries - 1:
-                        time.sleep(delay)
-            
-            raise last_error
-        return wrapper
-    return decorator
-
-# 使用示例
-@retry_on_error(max_retries=3, delay=2)
-def create_order_with_retry(client, **params):
-    return client.create_master_order(**params)
-```
-
-## 常见问题
-
-### 1. 如何获取 API 密钥？
-
-请登录 Quantum Execute 平台，在用户设置中创建 API 密钥。确保保管好您的密钥，不要将其提交到版本控制系统中。
-
-### 2. 时间戳错误怎么处理？
-
-如果遇到时间戳相关的错误，可能是您的系统时间与服务器时间不同步。请确保系统时间准确。
-
-### 3. 如何处理大量数据的分页？
-
-```python
-def get_all_data(fetch_func, **params):
-    """通用的分页数据获取函数"""
-    all_items = []
+# 批量获取所有订单
+def get_all_orders(client):
+    all_orders = []
     page = 1
     page_size = 100
     
     while True:
-        result = fetch_func(page=page, pageSize=page_size, **params)
-        all_items.extend(result['items'])
+        result = client.get_master_orders(page=page, pageSize=page_size)
+        all_orders.extend(result['items'])
         
+        # 检查是否还有更多数据
         if len(result['items']) < page_size:
             break
         page += 1
     
-    return all_items
-
-# 使用示例
-all_orders = get_all_data(client.get_master_orders, status="COMPLETED")
-all_fills = get_all_data(client.get_order_fills, symbol="BTCUSDT")
+    return all_orders
 ```
 
-### 4. 如何设置订单的时间？
-
-时间格式使用 ISO 8601 标准，例如：
-- UTC 时间：`2024-01-01T10:00:00Z`
-- 带时区：`2024-01-01T18:00:00+08:00`
+### 4. ListenKey 管理
 
 ```python
-from datetime import datetime, timezone
+import time
+from datetime import datetime
 
-# 获取当前 UTC 时间
-now_utc = datetime.now(timezone.utc).isoformat()
+# ListenKey 管理器
+class ListenKeyManager:
+    def __init__(self, client):
+        self.client = client
+        self.listen_key = None
+        self.expire_at = None
+    
+    def create_listen_key(self):
+        """创建或刷新 ListenKey"""
+        result = self.client.create_listen_key()
+        
+        if not result.get('success'):
+            raise Exception(f"创建 ListenKey 失败: {result.get('message')}")
+        
+        self.listen_key = result['listenKey']
+        self.expire_at = int(result['expireAt'])
+        
+        print(f"ListenKey 创建成功: {self.listen_key}, 过期时间: {self.expire_at}")
+        return self.listen_key
+    
+    def is_expired(self):
+        """检查 ListenKey 是否即将过期"""
+        if not self.expire_at:
+            return True
+        # 提前1小时刷新
+        return time.time() > self.expire_at - 3600
+    
+    def auto_refresh(self):
+        """自动刷新 ListenKey"""
+        if self.is_expired():
+            print("ListenKey 即将过期，开始刷新...")
+            self.create_listen_key()
 
-# 转换本地时间到 UTC
-local_time = datetime.now()
-utc_time = local_time.astimezone(timezone.utc).isoformat()
-```
+# 使用示例
+manager = ListenKeyManager(client)
+listen_key = manager.create_listen_key()
 
-### 5. 容忍度参数说明
-
-- `upTolerance`：允许超出计划进度的容忍度，如 "0.1" 表示允许超出 10%
-- `lowTolerance`：允许落后计划进度的容忍度
-- `strictUpBound`：是否严格限制在 upTolerance 以内，开启后可能导致小订单被过度拆分
-
-## 示例代码
-
-更多示例代码请参考 [examples](./examples) 目录：
-
-- [添加交易所 API](examples/user/add_exchange_api.py)
-- [创建主订单](examples/user/create_master_order.py)
-- [取消主订单](examples/user/cancel_master_order.py)
-- [查询订单列表](examples/user/get_master_orders.py)
-- [查询成交明细](examples/user/get_order_fills.py)
-
-## 开发和测试
-
-### 安装开发依赖
-
-```bash
-pip install -r requirements/requirements-dev.txt
-```
-
-### 运行测试
-
-```bash
-python -m pytest tests/
-```
-
-### 代码格式化
-
-```bash
-black qe/
-flake8 qe/
+# 定期检查并刷新
+while True:
+    manager.auto_refresh()
+    time.sleep(1800)  # 每30分钟检查一次
 ```
 
 ## 贡献指南
 
-欢迎提交 Issue 和 Pull Request！请确保：
-
-1. 代码符合 PEP 8 规范
-2. 添加适当的测试
-3. 更新相关文档
-
-## 更新日志
-
-### v1.0.0 (2024-01-01)
-- 初始版本发布
-- 支持完整的 Quantum Execute API
-- 支持多种认证方式
-- 完善的错误处理
-
-## 许可证
-
-本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件。
+欢迎提交 Issue 和 Pull Request！
 
 ## 联系我们
 

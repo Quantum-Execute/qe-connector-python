@@ -14,3 +14,4 @@ class User(API):
     from qe.user.trading import get_order_fills
     from qe.user.trading import create_master_order
     from qe.user.trading import cancel_master_order
+    from qe.user.trading import create_listen_key
