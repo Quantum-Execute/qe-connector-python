@@ -57,6 +57,32 @@ client = Client(
 )
 ```
 
+### 使用枚举类型（推荐）
+
+SDK 提供了枚举类型来确保类型安全和代码提示。推荐使用枚举而不是字符串：
+
+```python
+# 导入枚举类型
+from qe.lib import Algorithm, Exchange, MarketType, OrderSide, StrategyType, MarginType
+
+# 可用的枚举值
+print("算法类型:", [algo.value for algo in Algorithm])           # ['TWAP', 'VWAP', 'POV']
+print("交易所:", [exchange.value for exchange in Exchange])     # ['Binance']
+print("市场类型:", [market.value for market in MarketType])     # ['SPOT', 'PERP']
+print("订单方向:", [side.value for side in OrderSide])         # ['buy', 'sell']
+print("策略类型:", [strategy.value for strategy in StrategyType]) # ['TWAP_1', 'POV']
+print("保证金类型:", [margin.value for margin in MarginType])   # ['U']
+
+# 使用枚举创建订单（推荐）
+response = client.create_master_order(
+    algorithm=Algorithm.TWAP,        # 而不是 "TWAP"
+    exchange=Exchange.BINANCE,       # 而不是 "Binance"
+    marketType=MarketType.SPOT,      # 而不是 "SPOT"
+    side=OrderSide.BUY,             # 而不是 "buy"
+    # ... 其他参数
+)
+```
+
 ## API 参考
 
 ### 交易所 API 管理
@@ -66,27 +92,33 @@ client = Client(
 查询当前用户绑定的所有交易所 API 账户。
 
 **请求参数：**
-- `page` (int) - 页码，可选
-- `pageSize` (int) - 每页数量，可选
-- `exchange` (str) - 交易所名称筛选，可选
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| page | int | 否 | 页码 |
+| pageSize | int | 否 | 每页数量 |
+| exchange | str | 否 | 交易所名称筛选 |
 
 **响应字段：**
-- `items` - API 列表，每个 API 包含以下字段：
-  - `id` - API 记录的唯一标识
-  - `createdAt` - API 添加时间
-  - `accountName` - 账户名称（如：账户1、账户2）
-  - `exchange` - 交易所名称（如：Binance、OKX、Bybit）
-  - `apiKey` - 交易所 API Key（部分隐藏）
-  - `verificationMethod` - API 验证方式（如：OAuth、API）
-  - `balance` - 账户余额（美元）
-  - `status` - API 状态：正常、异常（不可用）
-  - `isValid` - API 是否有效
-  - `isTradingEnabled` - 是否开启交易权限
-  - `isDefault` - 是否为该交易所的默认账户
-  - `isPm` - 是否为 Pm 账户
-- `total` - API 总数
-- `page` - 当前页码
-- `pageSize` - 每页显示数量
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| items | array | API 列表 |
+| ├─ id | string | API 记录的唯一标识 |
+| ├─ createdAt | string | API 添加时间 |
+| ├─ accountName | string | 账户名称（如：账户1、账户2） |
+| ├─ exchange | string | 交易所名称（如：Binance、OKX、Bybit） |
+| ├─ apiKey | string | 交易所 API Key（部分隐藏） |
+| ├─ verificationMethod | string | API 验证方式（如：OAuth、API） |
+| ├─ balance | float | 账户余额（美元） |
+| ├─ status | string | API 状态：正常、异常（不可用） |
+| ├─ isValid | bool | API 是否有效 |
+| ├─ isTradingEnabled | bool | 是否开启交易权限 |
+| ├─ isDefault | bool | 是否为该交易所的默认账户 |
+| ├─ isPm | bool | 是否为 Pm 账户 |
+| total | int | API 总数 |
+| page | int | 当前页码 |
+| pageSize | int | 每页显示数量 |
 
 **示例代码：**
 
@@ -128,18 +160,21 @@ apis = client.list_exchange_apis(
 | 参数名 | 类型 | 是否必传 | 描述 |
 |--------|------|--------|------|
 | **基础参数** |
-| algorithm | string | 是 | 交易算法，可选值：TWAP、VWAP、POV |
-| exchange | string | 是 | 交易所名称，可选值：Binance |
+| algorithm | string/Algorithm | 是 | 交易算法，可选值：TWAP、VWAP、POV |
+| exchange | string/Exchange | 是 | 交易所名称，可选值：Binance |
 | symbol | string | 是 | 交易对符号（如：BTCUSDT） |
-| marketType | string | 是 | 市场类型，可选值：SPOT（现货）、PERP（合约） |
-| side | string | 是 | 买卖方向，可选值：buy（买入）、sell（卖出） |
+| marketType | string/MarketType | 是 | 市场类型，可选值：SPOT（现货）、PERP（合约） |
+| side | string/OrderSide | 是 | 买卖方向，可选值：buy（买入）、sell（卖出） |
 | apiKeyId | string | 是 | 指定使用的 API 密钥 ID |
 | **数量参数（二选一）** |
 | totalQuantity | string | 否* | 要交易的总数量，支持字符串表示以避免精度问题，与 orderNotional 二选一，范围：>0 |
 | orderNotional | string | 否* | 按价值下单时的金额，以计价币种为单位（如ETHUSDT为USDT数量），与 totalQuantity 二选一，范围：>0 |
 | **时间参数** |
 | startTime | string | 否 | 开始执行时间（ISO 8601格式） |
+| endTime | string | 否 | 结束执行时间（ISO 8601格式） |
 | executionDuration | int | 否 | 订单的有效时间（分钟），范围：>1 |
+| **策略参数** |
+| strategyType | string/StrategyType | 否 | 策略类型，如：TWAP_1、POV |
 | **TWAP/VWAP 算法参数** |
 | mustComplete | bool | 否 | 是否一定要在duration之内执行完，选false则不会追进度，默认：true |
 | makerRateLimit | string | 否 | 要求maker占比超过该值（优先级低于mustcomplete），范围：0-1，默认："0" |
@@ -153,7 +188,7 @@ apis = client.list_exchange_apis(
 | povMinLimit | string | 否 | 占市场成交量比例下限，范围：小于max(POVLimit-0.01,0)，默认："0" |
 | **其他参数** |
 | reduceOnly | bool | 否 | 合约交易时是否仅减仓，默认：false |
-| marginType | string | 否 | 合约交易保证金类型，可选值：U（U本位） |
+| marginType | string/MarginType | 否 | 合约交易保证金类型，可选值：U（U本位） |
 | notes | string | 否 | 订单备注 |
 
 *注：totalQuantity 和 orderNotional 必须传其中一个  
@@ -169,23 +204,28 @@ apis = client.list_exchange_apis(
 **示例代码：**
 
 ```python
-# TWAP 订单示例 - 在 30 分钟内分批买入价值 $10,000 的 BTC
+# 导入枚举类型（推荐方式）
+from qe.lib import Algorithm, Exchange, MarketType, OrderSide, StrategyType, MarginType
+
+# TWAP 订单示例 - 使用枚举创建订单（推荐）
 response = client.create_master_order(
-    algorithm="TWAP",
-    exchange="Binance",
+    algorithm=Algorithm.TWAP,                      # 使用算法枚举
+    exchange=Exchange.BINANCE,                     # 使用交易所枚举
     symbol="BTCUSDT",
-    marketType="SPOT",
-    side="buy",
-    apiKeyId="your-api-key-id",  # 从 list_exchange_apis 获取
-    orderNotional="10000",       # $10,000 名义价值
-    startTime="2024-01-01T10:00:00Z",
-    executionDuration=30,        # 30 分钟
-    mustComplete=True,           # 必须完成全部订单
-    limitPrice="60000",         # 最高价格 $60,000
-    upTolerance="0.1",          # 允许超出 10%
-    lowTolerance="0.1",         # 允许落后 10%
-    tailOrderProtection=True,   # 尾单保护
-    notes="测试 TWAP 订单"      # 订单备注
+    marketType=MarketType.SPOT,                    # 使用市场类型枚举
+    side=OrderSide.BUY,                           # 使用订单方向枚举
+    apiKeyId="your-api-key-id",                   # 从 list_exchange_apis 获取
+    orderNotional="200",                          # $200 名义价值
+    strategyType=StrategyType.TWAP_1,             # 使用策略类型枚举
+    startTime="2025-09-02T19:54:34+08:00",
+    endTime="2025-09-03T01:44:35+08:00",
+    executionDuration="5",                        # 5 秒间隔
+    mustComplete=True,                            # 必须完成全部订单
+    worstPrice=-1,                               # -1 表示无价格限制
+    upTolerance="-1",                            # 允许超出容忍度
+    lowTolerance="-1",                           # 允许落后容忍度
+    tailOrderProtection=True,                    # 尾单保护
+    notes="测试 TWAP 订单"                       # 订单备注
 )
 
 if response.get('success'):
@@ -194,23 +234,27 @@ else:
     print(f"创建失败：{response.get('message')}")
 ```
 
-**POV 算法示例：**
+**POV 合约订单示例：**
 
 ```python
-# POV 订单示例 - 按市场成交量比例买入 BTC
+# POV 合约订单示例 - 使用枚举
 response = client.create_master_order(
-    algorithm="POV",
-    exchange="Binance",
+    algorithm=Algorithm.POV,                       # POV 算法
+    exchange=Exchange.BINANCE,
     symbol="BTCUSDT",
-    marketType="SPOT",
-    side="buy",
+    marketType=MarketType.PERP,                    # 合约市场
+    side=OrderSide.SELL,                          # 卖出
     apiKeyId="your-api-key-id",
-    totalQuantity="1.5",        # 买入 1.5 BTC
-    executionDuration=60,       # 60 分钟
-    povLimit="0.1",            # 占市场成交量 10%
-    povMinLimit="0.05",        # 最低占市场成交量 5%
-    limitPrice="65000",        # 最高价格 $65,000
-    tailOrderProtection=True
+    orderNotional="1000",                         # $1000 名义价值
+    strategyType=StrategyType.POV,                # POV 策略
+    startTime="2025-09-02T19:54:34+08:00",
+    endTime="2025-09-03T01:44:35+08:00",
+    povLimit=0.2,                                 # 占市场成交量 20%
+    povMinLimit=0.05,                             # 最低占市场成交量 5%
+    marginType=MarginType.U,                      # U本位保证金
+    reduceOnly=False,
+    mustComplete=True,
+    notes="POV 合约订单示例"
 )
 
 if response.get('success'):
