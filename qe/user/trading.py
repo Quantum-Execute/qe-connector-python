@@ -1,4 +1,6 @@
+from typing import Union, Optional
 from qe.lib.utils import check_required_parameters
+from qe.lib.trading_enums import Algorithm, Exchange, MarketType, OrderSide, StrategyType, MarginType
 
 
 def get_master_orders(self, **kwargs):
@@ -43,8 +45,14 @@ def get_order_fills(self, **kwargs):
     return self.sign_request("GET", url_path, {**kwargs})
 
 
-def create_master_order(self, algorithm: str, algorithmType: str, exchange: str, 
-                       symbol: str, marketType: str, side: str, apiKeyId: str, **kwargs):
+def create_master_order(self, 
+                       algorithm: Union[Algorithm, str],
+                       exchange: Union[Exchange, str],
+                       symbol: str,
+                       marketType: Union[MarketType, str],
+                       side: Union[OrderSide, str],
+                       apiKeyId: str,
+                       **kwargs):
     """Create master order (USER_DATA)
     
     Create a new master order
@@ -52,17 +60,16 @@ def create_master_order(self, algorithm: str, algorithmType: str, exchange: str,
     POST /user/trading/master-orders
     
     Args:
-        algorithm (str): Algorithm name
-        algorithmType (str): Algorithm type
-        exchange (str): Exchange name
+        algorithm (Algorithm | str): Algorithm name (e.g., Algorithm.TWAP, Algorithm.VWAP, Algorithm.POV)
+        exchange (Exchange | str): Exchange name (e.g., Exchange.BINANCE)
         symbol (str): Trading symbol
-        marketType (str): Market type
-        side (str): Order side (BUY/SELL)
+        marketType (MarketType | str): Market type (e.g., MarketType.SPOT, MarketType.PERP)
+        side (OrderSide | str): Order side (e.g., OrderSide.BUY, OrderSide.SELL)
         apiKeyId (str): API key ID to use
     Keyword Args:
         totalQuantity (float, optional): Total quantity to trade
         orderNotional (float, optional): Order notional value
-        strategyType (str, optional): Strategy type
+        strategyType (StrategyType | str, optional): Strategy type (e.g., StrategyType.TWAP_1, StrategyType.TWAP_2, StrategyType.POV)
         startTime (str, optional): Start time
         executionDuration (str, optional): Execution duration
         endTime (str, optional): End time
@@ -70,7 +77,8 @@ def create_master_order(self, algorithm: str, algorithmType: str, exchange: str,
         mustComplete (bool, optional): Must complete flag
         makerRateLimit (float, optional): Maker rate limit
         povLimit (float, optional): POV limit
-        marginType (str, optional): Margin type
+        povMinLimit (float, optional): POV minimum limit
+        marginType (MarginType | str, optional): Margin type (e.g., MarginType.U, MarginType.C)
         reduceOnly (bool, optional): Reduce only flag
         notes (str, optional): Order notes
         clientId (str, optional): Client order ID
@@ -79,11 +87,27 @@ def create_master_order(self, algorithm: str, algorithmType: str, exchange: str,
         upTolerance (str, optional): Up tolerance
         lowTolerance (str, optional): Low tolerance
         strictUpBound (bool, optional): Strict upper bound flag
+        tailOrderProtection (bool, optional): Tail order protection flag (defaults to True)
         recvWindow (int, optional): The value cannot be greater than 60000
     """
+    # 转换枚举为字符串值
+    if isinstance(algorithm, Algorithm):
+        algorithm = algorithm.value
+    if isinstance(exchange, Exchange):
+        exchange = exchange.value
+    if isinstance(marketType, MarketType):
+        marketType = marketType.value
+    if isinstance(side, OrderSide):
+        side = side.value
+    
+    # 处理可选参数中的枚举
+    if 'strategyType' in kwargs and isinstance(kwargs['strategyType'], StrategyType):
+        kwargs['strategyType'] = kwargs['strategyType'].value
+    if 'marginType' in kwargs and isinstance(kwargs['marginType'], MarginType):
+        kwargs['marginType'] = kwargs['marginType'].value
+    
     check_required_parameters([
         [algorithm, "algorithm"],
-        [algorithmType, "algorithmType"],
         [exchange, "exchange"],
         [symbol, "symbol"],
         [marketType, "marketType"],
@@ -93,14 +117,29 @@ def create_master_order(self, algorithm: str, algorithmType: str, exchange: str,
     
     params = {
         "algorithm": algorithm,
-        "algorithmType": algorithmType,
+        "algorithmType": "TWAP",  # 固定值，与 Go 版本保持一致
         "exchange": exchange,
         "symbol": symbol,
         "marketType": marketType,
         "side": side,
         "apiKeyId": apiKeyId,
-        **kwargs
     }
+    
+    # 添加可选参数
+    for key in ['totalQuantity', 'orderNotional', 'strategyType', 'startTime', 
+                'executionDuration', 'endTime', 'limitPrice', 'mustComplete',
+                'makerRateLimit', 'povLimit', 'povMinLimit', 'marginType', 
+                'reduceOnly', 'notes', 'clientId', 'worstPrice', 'limitPriceString',
+                'upTolerance', 'lowTolerance', 'strictUpBound', 'recvWindow']:
+        if key in kwargs:
+            params[key] = kwargs[key]
+    
+    # 设置 tailOrderProtection 默认值（与 Go 版本保持一致）
+    if 'tailOrderProtection' in kwargs:
+        params['tailOrderProtection'] = kwargs['tailOrderProtection']
+    else:
+        params['tailOrderProtection'] = True
+    
     url_path = "/user/trading/master-orders"
     return self.sign_request("POST", url_path, params)
 
