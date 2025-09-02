@@ -158,38 +158,38 @@ apis = client.list_exchange_apis(
 **请求参数：**
 
 | 参数名 | 类型 | 是否必传 | 描述 |
-|--------|------|--------|------|
+|--------|------|------|------|
 | **基础参数** |
-| algorithm | string/Algorithm | 是 | 交易算法，可选值：TWAP、VWAP、POV |
-| exchange | string/Exchange | 是 | 交易所名称，可选值：Binance |
-| symbol | string | 是 | 交易对符号（如：BTCUSDT） |
-| marketType | string/MarketType | 是 | 市场类型，可选值：SPOT（现货）、PERP（合约） |
-| side | string/OrderSide | 是 | 买卖方向，可选值：buy（买入）、sell（卖出） |
-| apiKeyId | string | 是 | 指定使用的 API 密钥 ID |
+| algorithm | string/Algorithm | 是    | 交易算法，可选值：TWAP、VWAP、POV |
+| exchange | string/Exchange | 是    | 交易所名称，可选值：Binance |
+| symbol | string | 是    | 交易对符号（如：BTCUSDT） |
+| marketType | string/MarketType | 是    | 市场类型，可选值：SPOT（现货）、PERP（合约） |
+| side | string/OrderSide | 是    | 买卖方向，可选值：buy（买入）、sell（卖出） |
+| apiKeyId | string | 是    | 指定使用的 API 密钥 ID |
 | **数量参数（二选一）** |
-| totalQuantity | string | 否* | 要交易的总数量，支持字符串表示以避免精度问题，与 orderNotional 二选一，范围：>0 |
-| orderNotional | string | 否* | 按价值下单时的金额，以计价币种为单位（如ETHUSDT为USDT数量），与 totalQuantity 二选一，范围：>0 |
+| totalQuantity | string | 否*   | 要交易的总数量，支持字符串表示以避免精度问题，与 orderNotional 二选一，范围：>0 |
+| orderNotional | string | 否*   | 按价值下单时的金额，以计价币种为单位（如ETHUSDT为USDT数量），与 totalQuantity 二选一，范围：>0 |
 | **时间参数** |
-| startTime | string | 否 | 开始执行时间（ISO 8601格式） |
-| endTime | string | 否 | 结束执行时间（ISO 8601格式） |
-| executionDuration | int | 否 | 订单的有效时间（分钟），范围：>1 |
+| startTime | string | 否    | 开始执行时间（ISO 8601格式） |
+| endTime | string | 否    | 结束执行时间（ISO 8601格式） |
+| executionDuration | int | 否    | 订单的有效时间（分钟），范围：>1 |
 | **策略参数** |
-| strategyType | string/StrategyType | 否 | 策略类型，如：TWAP_1、POV |
+| strategyType | string/StrategyType | 是    | 策略类型，如：TWAP_1、POV |
 | **TWAP/VWAP 算法参数** |
-| mustComplete | bool | 否 | 是否一定要在duration之内执行完，选false则不会追进度，默认：true |
-| makerRateLimit | string | 否 | 要求maker占比超过该值（优先级低于mustcomplete），范围：0-1，默认："0" |
-| povLimit | string | 否 | 占市场成交量比例限制，优先级低于mustcomplete，范围：0-1，默认："0.8" |
-| limitPrice | string | 否 | 最高/低允许交易的价格，买的话就是最高价，卖就是最低价，超出范围停止交易，填"-1"不限制，范围：>0，默认："-1" |
-| upTolerance | string | 否 | 允许超出schedule的容忍度，比如0.1就是执行过程中允许比目标进度超出母单数量的10%，范围：>0且<1，默认：-1 |
-| lowTolerance | string | 否 | 允许落后schedule的容忍度，范围：>0且<1，默认：-1 |
-| strictUpBound | bool | 否 | 是否追求严格小于uptolerance，开启后可能会把很小的母单也拆的很细，不建议开启，默认：false |
-| tailOrderProtection | bool | 否 | 尾单必须taker扫完，如果false则允许省一点，小于交易所最小发单量，默认：true |
+| mustComplete | bool | 否    | 是否一定要在duration之内执行完，选false则不会追进度，默认：true |
+| makerRateLimit | string | 否    | 要求maker占比超过该值（优先级低于mustcomplete），范围：0-1，默认："0" |
+| povLimit | string | 否    | 占市场成交量比例限制，优先级低于mustcomplete，范围：0-1，默认："0.8" |
+| limitPrice | string | 否    | 最高/低允许交易的价格，买的话就是最高价，卖就是最低价，超出范围停止交易，填"-1"不限制，范围：>0，默认："-1" |
+| upTolerance | string | 否    | 允许超出schedule的容忍度，比如0.1就是执行过程中允许比目标进度超出母单数量的10%，范围：>0且<1，默认：-1 |
+| lowTolerance | string | 否    | 允许落后schedule的容忍度，范围：>0且<1，默认：-1 |
+| strictUpBound | bool | 否    | 是否追求严格小于uptolerance，开启后可能会把很小的母单也拆的很细，不建议开启，默认：false |
+| tailOrderProtection | bool | 否    | 尾单必须taker扫完，如果false则允许省一点，小于交易所最小发单量，默认：true |
 | **POV 算法参数** |
-| povMinLimit | string | 否 | 占市场成交量比例下限，范围：小于max(POVLimit-0.01,0)，默认："0" |
+| povMinLimit | string | 否    | 占市场成交量比例下限，范围：小于max(POVLimit-0.01,0)，默认："0" |
 | **其他参数** |
-| reduceOnly | bool | 否 | 合约交易时是否仅减仓，默认：false |
-| marginType | string/MarginType | 否 | 合约交易保证金类型，可选值：U（U本位） |
-| notes | string | 否 | 订单备注 |
+| reduceOnly | bool | 否    | 合约交易时是否仅减仓，默认：false |
+| marginType | string/MarginType | 否    | 合约交易保证金类型，可选值：U（U本位） |
+| notes | string | 否    | 订单备注 |
 
 *注：totalQuantity 和 orderNotional 必须传其中一个  
 
