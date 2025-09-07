@@ -32,7 +32,7 @@ class WebSocketService:
         self.listen_key: Optional[str] = None
         self.websocket: Optional[websockets.WebSocketServerProtocol] = None
         self.handlers = WebSocketEventHandlers()
-        self.is_connected = False
+        self._is_connected = False
         self._lock = threading.RLock()
         self._reconnect_delay = 5.0
         self._ping_interval = 1.0
@@ -69,7 +69,7 @@ class WebSocketService:
     async def _async_connect(self):
         """异步连接WebSocket"""
         with self._lock:
-            if self.is_connected:
+            if self._is_connected:
                 return
         
         ws_url = self._get_websocket_url()
@@ -84,7 +84,7 @@ class WebSocketService:
             ) as websocket:
                 self.websocket = websocket
                 with self._lock:
-                    self.is_connected = True
+                    self._is_connected = True
                 
                 # 调用连接成功回调
                 if self.handlers.on_connected:
@@ -201,7 +201,7 @@ class WebSocketService:
                         if self.handlers.on_order:
                             order = OrderMessage(**base_data)
                             self.handlers.on_order(order)
-                    
+
                     elif base_msg.type == ThirdPartyMessageType.FILL.value:
                         if self.handlers.on_fill:
                             fill = FillMessage(**base_data)
@@ -227,10 +227,10 @@ class WebSocketService:
     def _handle_disconnect(self):
         """处理断开连接"""
         with self._lock:
-            if not self.is_connected:
+            if not self._is_connected:
                 return
             
-            self.is_connected = False
+            self._is_connected = False
             self.websocket = None
         
         # 调用断开连接回调
@@ -259,15 +259,36 @@ class WebSocketService:
         
         with self._lock:
             if self.websocket:
-                # 在事件循环中关闭连接
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
+                # 直接关闭连接，不创建新的事件循环
                 try:
-                    loop.run_until_complete(self.websocket.close())
+                    # 如果WebSocket还在运行，直接关闭
+                    if hasattr(self.websocket, 'close') and not getattr(self.websocket, 'closed', False):
+                        # 使用线程安全的方式关闭
+                        import threading
+                        def close_websocket():
+                            try:
+                                # 在WebSocket的原始事件循环中关闭
+                                if hasattr(self.websocket, '_loop') and self.websocket._loop.is_running():
+                                    asyncio.run_coroutine_threadsafe(self.websocket.close(), self.websocket._loop)
+                                else:
+                                    # 如果原始循环已停止，创建新循环
+                                    loop = asyncio.new_event_loop()
+                                    asyncio.set_event_loop(loop)
+                                    try:
+                                        loop.run_until_complete(self.websocket.close())
+                                    finally:
+                                        loop.close()
+                            except Exception as e:
+                                self._logger.warning(f"Error closing websocket: {e}")
+                        
+                        close_thread = threading.Thread(target=close_websocket, daemon=True)
+                        close_thread.start()
+                        close_thread.join(timeout=2)  # 最多等待2秒
+                except Exception as e:
+                    self._logger.warning(f"Error in websocket close: {e}")
                 finally:
-                    loop.close()
-                self.websocket = None
-            self.is_connected = False
+                    self.websocket = None
+            self._is_connected = False
         
         # 等待所有线程结束
         for thread in self._threads:
@@ -278,7 +299,7 @@ class WebSocketService:
     def is_connected(self) -> bool:
         """是否已连接"""
         with self._lock:
-            return self.is_connected
+            return self._is_connected
     
     def set_reconnect_delay(self, delay: float) -> 'WebSocketService':
         """设置重连延迟"""
