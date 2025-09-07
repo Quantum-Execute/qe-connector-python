@@ -178,41 +178,87 @@ class WebSocketService:
         """分发消息到相应的处理器"""
         try:
             if client_msg.type == ClientMessageType.STATUS.value:
+                # 状态消息 - 根据extra中的message_type判断具体类型
+                message_type = client_msg.data  # 直接使用data作为状态类型
                 if self.handlers.on_status:
-                    self.handlers.on_status(client_msg.data)
+                    self.handlers.on_status(message_type)
             
             elif client_msg.type == ClientMessageType.ERROR.value:
                 if self.handlers.on_error:
                     self.handlers.on_error(WebsocketClientError(f"Server error: {client_msg.data}"))
             
-            elif client_msg.type in [ClientMessageType.MASTER_DATA.value, ClientMessageType.ORDER_DATA.value]:
-                # 解析第三方消息类型
+            elif client_msg.type == ClientMessageType.MASTER_DATA.value:
+                # 母单详细数据 - 解析JSON数据
                 try:
-                    base_data = json.loads(client_msg.data)
-                    base_msg = BaseThirdPartyMessage(type=base_data.get("type", ""))
-                    
-                    # 根据第三方消息类型分发
-                    if base_msg.type == ThirdPartyMessageType.MASTER_ORDER.value:
-                        if self.handlers.on_master_order:
-                            master_order = MasterOrderMessage(**base_data)
-                            self.handlers.on_master_order(master_order)
-                    
-                    elif base_msg.type == ThirdPartyMessageType.ORDER.value:
-                        if self.handlers.on_order:
-                            order = OrderMessage(**base_data)
-                            self.handlers.on_order(order)
-
-                    elif base_msg.type == ThirdPartyMessageType.FILL.value:
-                        if self.handlers.on_fill:
-                            fill = FillMessage(**base_data)
-                            self.handlers.on_fill(fill)
+                    master_order_data = json.loads(client_msg.data)
+                    if self.handlers.on_master_order:
+                        # 构造MasterOrderMessage，使用默认值填充缺失字段
+                        master_order = MasterOrderMessage(
+                            type=master_order_data.get("type", "master_order"),
+                            master_order_id=master_order_data.get("master_order_id", ""),
+                            client_id=master_order_data.get("client_id", ""),
+                            strategy=master_order_data.get("strategy", ""),
+                            symbol=master_order_data.get("symbol", ""),
+                            side=master_order_data.get("side", ""),
+                            qty=master_order_data.get("qty", 0.0),
+                            duration_secs=master_order_data.get("duration_secs", 0.0),
+                            category=master_order_data.get("category", ""),
+                            action=master_order_data.get("action", ""),
+                            reduce_only=master_order_data.get("reduce_only", False),
+                            status=master_order_data.get("status", ""),
+                            date=master_order_data.get("date", 0.0),
+                            ticktime_int=master_order_data.get("ticktime_int", 0),
+                            ticktime_ms=master_order_data.get("ticktime_ms", 0),
+                            reason=master_order_data.get("reason", ""),
+                            timestamp=master_order_data.get("timestamp", 0)
+                        )
+                        self.handlers.on_master_order(master_order)
                 
                 except json.JSONDecodeError as e:
-                    self._logger.error(f"Failed to parse third party message: {e}")
+                    self._logger.error(f"Failed to parse master data message: {e}")
                     if self.handlers.on_error:
-                        self.handlers.on_error(WebsocketClientError(f"Third party message parse error: {e}"))
+                        self.handlers.on_error(WebsocketClientError(f"Master data parse error: {e}"))
                 except Exception as e:
-                    self._logger.error(f"Error processing third party message: {e}")
+                    self._logger.error(f"Error processing master data message: {e}")
+                    if self.handlers.on_error:
+                        self.handlers.on_error(e)
+            
+            elif client_msg.type == ClientMessageType.ORDER_DATA.value:
+                # 订单详细数据 - 解析JSON数据
+                try:
+                    order_data = json.loads(client_msg.data)
+                    if self.handlers.on_order:
+                        # 构造OrderMessage，使用默认值填充缺失字段
+                        order = OrderMessage(
+                            type=order_data.get("type", "order"),
+                            master_order_id=order_data.get("master_order_id", ""),
+                            order_id=order_data.get("order_id", ""),
+                            symbol=order_data.get("symbol", ""),
+                            category=order_data.get("category", ""),
+                            side=order_data.get("side", ""),
+                            price=order_data.get("price", 0.0),
+                            quantity=order_data.get("quantity", 0.0),
+                            status=order_data.get("status", ""),
+                            created_time=order_data.get("created_time", 0),
+                            fill_qty=order_data.get("fill_qty", 0.0),
+                            fill_price=order_data.get("fill_price", 0.0),
+                            cum_filled_qty=order_data.get("cum_filled_qty", 0.0),
+                            quantity_remaining=order_data.get("quantity_remaining", 0.0),
+                            ack_time=order_data.get("ack_time", 0),
+                            last_fill_time=order_data.get("last_fill_time", 0),
+                            cancel_time=order_data.get("cancel_time", 0),
+                            price_type=order_data.get("price_type", ""),
+                            reason=order_data.get("reason", ""),
+                            timestamp=order_data.get("timestamp", 0)
+                        )
+                        self.handlers.on_order(order)
+                
+                except json.JSONDecodeError as e:
+                    self._logger.error(f"Failed to parse order data message: {e}")
+                    if self.handlers.on_error:
+                        self.handlers.on_error(WebsocketClientError(f"Order data parse error: {e}"))
+                except Exception as e:
+                    self._logger.error(f"Error processing order data message: {e}")
                     if self.handlers.on_error:
                         self.handlers.on_error(e)
         

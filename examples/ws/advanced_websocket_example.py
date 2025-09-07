@@ -164,7 +164,7 @@ def main():
     
     try:
         # 获取listen_key
-        listen_key = "your_listen_key_here"
+        listen_key = "db75c39a6c32470a977181ecb9dfdeb6"
         
         # 连接WebSocket
         ws_manager.connect(listen_key)
