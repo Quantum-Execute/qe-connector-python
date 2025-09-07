@@ -13,6 +13,9 @@
 - ✅ 主订单创建与管理（TWAP、VWAP、POV 等算法）
 - ✅ 订单查询和成交明细
 - ✅ ListenKey 创建与管理
+- ✅ 交易对信息查询
+- ✅ 服务器连通性测试
+- ✅ 服务器时间同步
 - ✅ 安全的 HMAC-SHA256 签名认证
 - ✅ 支持生产环境和测试环境
 - ✅ 链式调用 API 设计
@@ -84,6 +87,192 @@ response = client.create_master_order(
 ```
 
 ## API 参考
+
+### 公共接口
+
+#### 服务器连通性测试
+
+##### Ping 服务器
+
+测试与 Quantum Execute 服务器的连通性。
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| 无需参数 | - | - | - |
+
+**响应：**
+
+成功时无返回内容，失败时返回错误信息。
+
+**示例代码：**
+
+```python
+from qe.status import Status as StatusClient
+
+# 创建状态客户端（无需认证）
+status_client = StatusClient()
+
+# 测试服务器连通性
+try:
+    status_client.ping()
+    print("服务器连接正常")
+except Exception as e:
+    print(f"服务器连接失败: {e}")
+```
+
+#### 获取服务器时间
+
+##### 查询服务器时间戳
+
+获取 Quantum Execute 服务器的当前时间戳（毫秒）。
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| 无需参数 | - | - | - |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| serverTimeMilli | int | 服务器时间戳（毫秒） |
+
+**示例代码：**
+
+```python
+from qe.status import Status as StatusClient
+import datetime
+
+# 创建状态客户端
+status_client = StatusClient()
+
+# 获取服务器时间戳
+try:
+    timestamp = status_client.timestamp()
+    print(f"服务器时间戳: {timestamp}")
+    
+    # 转换为可读时间格式
+    readable_time = datetime.datetime.fromtimestamp(timestamp / 1000)
+    print(f"服务器时间: {readable_time}")
+except Exception as e:
+    print(f"获取时间戳失败: {e}")
+```
+
+#### 交易对管理
+
+##### 查询交易对列表
+
+获取支持的交易对信息，包括现货和合约交易对。
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| page | int | 否 | 页码 |
+| pageSize | int | 否 | 每页数量 |
+| exchange | str | 否 | 交易所名称筛选 |
+| marketType | str/TradingPairMarketType | 否 | 市场类型筛选，可选值：SPOT（现货）、FUTURES（合约） |
+| isCoin | bool | 否 | 是否为币种筛选 |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| items | array | 交易对列表 |
+| ├─ id | int | 交易对 ID |
+| ├─ symbol | string | 交易对符号（如：BTCUSDT） |
+| ├─ baseAsset | string | 基础币种（如：BTC） |
+| ├─ quoteAsset | string | 计价币种（如：USDT） |
+| ├─ exchange | string | 交易所名称 |
+| ├─ marketType | string | 市场类型（SPOT/FUTURES） |
+| ├─ contractType | string | 合约类型（仅合约交易对） |
+| ├─ deliveryDate | string | 交割日期（仅合约交易对） |
+| ├─ status | string | 交易对状态 |
+| ├─ createdAt | string | 创建时间 |
+| ├─ updatedAt | string | 更新时间 |
+| page | int | 当前页码 |
+| pageSize | int | 每页数量 |
+| total | string | 总数 |
+
+**示例代码：**
+
+```python
+from qe.pub import Pub as PubClient
+from qe.lib import TradingPairMarketType
+
+# 创建公共客户端（无需认证）
+pub_client = PubClient()
+
+# 获取所有交易对
+try:
+    pairs = pub_client.trading_pairs()
+    print(f"总交易对数量: {pairs.get('total', 0)}")
+    
+    # 打印前几个交易对信息
+    for pair in pairs.get('items', [])[:5]:
+        print(f"""
+交易对信息：
+    符号: {pair['symbol']}
+    基础币种: {pair['baseAsset']}
+    计价币种: {pair['quoteAsset']}
+    交易所: {pair['exchange']}
+    市场类型: {pair['marketType']}
+    状态: {pair['status']}
+    创建时间: {pair['createdAt']}
+        """)
+        
+        # 如果是合约交易对，显示额外信息
+        if pair['marketType'] == 'FUTURES':
+            print(f"    合约类型: {pair.get('contractType', 'N/A')}")
+            if pair.get('deliveryDate'):
+                print(f"    交割日期: {pair['deliveryDate']}")
+                
+except Exception as e:
+    print(f"获取交易对失败: {e}")
+
+# 使用枚举类型筛选（推荐）
+try:
+    # 获取币安现货交易对
+    spot_pairs = pub_client.trading_pairs(
+        exchange="Binance",
+        marketType=TradingPairMarketType.SPOT,  # 使用枚举
+        page=1,
+        pageSize=10
+    )
+    print(f"币安现货交易对数量: {len(spot_pairs.get('items', []))}")
+    
+    # 获取合约交易对
+    futures_pairs = pub_client.trading_pairs(
+        marketType=TradingPairMarketType.FUTURES,  # 使用枚举
+        page=1,
+        pageSize=20
+    )
+    print(f"合约交易对数量: {len(futures_pairs.get('items', []))}")
+    
+    # 获取币种交易对
+    coin_pairs = pub_client.trading_pairs(isCoin=True)
+    print(f"币种交易对数量: {len(coin_pairs.get('items', []))}")
+    
+except Exception as e:
+    print(f"筛选交易对失败: {e}")
+
+# 使用字符串筛选（向后兼容）
+try:
+    # 使用字符串参数
+    spot_pairs = pub_client.trading_pairs(
+        exchange="Binance",
+        marketType="SPOT",  # 使用字符串
+        page=1,
+        pageSize=5
+    )
+    print(f"现货交易对数量: {len(spot_pairs.get('items', []))}")
+    
+except Exception as e:
+    print(f"获取现货交易对失败: {e}")
+```
 
 ### 交易所 API 管理
 
@@ -761,6 +950,104 @@ listen_key = manager.create_listen_key()
 while True:
     manager.auto_refresh()
     time.sleep(1800)  # 每30分钟检查一次
+```
+
+## 常见问题
+
+### 1. 如何获取 API 密钥？
+
+请登录 Quantum Execute 平台，在用户设置中创建 API 密钥。
+
+### 2. 如何处理时间格式？
+
+时间格式使用 ISO 8601 标准，例如：
+- UTC 时间：`2024-01-01T10:00:00Z`
+- 带时区：`2024-01-01T18:00:00+08:00`
+
+### 3. 订单类型说明
+
+- **TWAP (Time Weighted Average Price)**：时间加权平均价格算法，在指定时间段内平均分配订单
+- **VWAP (Volume Weighted Average Price)**：成交量加权平均价格算法，根据市场成交量分布执行订单
+- **POV (Percentage of Volume)**：成交量百分比算法，保持占市场成交量的固定比例
+
+### 4. 枚举值说明
+
+**算法类型 (Algorithm)：**
+
+| 枚举值 | 描述 |
+|--------|------|
+| TWAP | TWAP算法 |
+| VWAP | VWAP算法 |
+| POV | POV算法 |
+
+**市场类型 (MarketType)：**
+
+| 枚举值 | 描述 |
+|--------|------|
+| SPOT | 现货市场 |
+| PERP | 合约市场 |
+
+**订单方向 (OrderSide)：**
+
+| 枚举值 | 描述 |
+|--------|------|
+| buy | 买入 |
+| sell | 卖出 |
+
+**交易所 (Exchange)：**
+
+| 枚举值 | 描述 |
+|--------|------|
+| Binance | 币安 |
+
+**保证金类型 (MarginType)：**
+
+| 枚举值 | 描述 |
+|--------|------|
+| U | U本位 |
+
+**母单状态 (MasterOrderStatus)：**
+
+| 枚举值 | 描述 |
+|--------|------|
+| NEW | 执行中 |
+| COMPLETED | 已完成 |
+
+**交易对市场类型 (TradingPairMarketType)：**
+
+| 枚举值 | 描述 |
+|--------|------|
+| SPOT | 现货品种 |
+| FUTURES | 期货品种 |
+
+### 5. 公共接口使用说明
+
+**Status 接口（无需认证）：**
+- `ping()`: 测试服务器连通性
+- `timestamp()`: 获取服务器时间戳
+
+**Pub 接口（无需认证）：**
+- `trading_pairs()`: 获取交易对列表，支持各种筛选条件
+
+**User 接口（需要认证）：**
+- 所有交易相关功能都需要有效的 API 密钥
+
+### 6. 枚举类型使用建议
+
+推荐使用枚举类型而不是字符串，这样可以获得：
+- 类型安全：编译时检查参数正确性
+- 代码提示：IDE 可以提供自动补全
+- 避免拼写错误：减少因字符串拼写错误导致的错误
+
+```python
+# 推荐使用枚举
+from qe.lib import TradingPairMarketType
+
+# 使用枚举
+pairs = pub_client.trading_pairs(marketType=TradingPairMarketType.SPOT)
+
+# 不推荐使用字符串
+pairs = pub_client.trading_pairs(marketType="SPOT")
 ```
 
 ## 贡献指南

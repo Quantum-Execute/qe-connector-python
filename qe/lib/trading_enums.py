@@ -50,3 +50,9 @@ class Category(str, Enum):
     """币对品种枚举（与市场类型对应）"""
     SPOT = "spot"  # 现货品种
     PERP = "perp"  # 合约品种
+
+
+class TradingPairMarketType(str, Enum):
+    """交易对市场类型枚举"""
+    FUTURES = "FUTURES"  # 期货品种
+    SPOT = "SPOT"        # 现货品种

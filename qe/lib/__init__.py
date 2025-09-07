@@ -9,7 +9,8 @@ from qe.lib.trading_enums import (
     OrderSide,
     MarginType,
     Exchange,
-    Category
+    Category,
+    TradingPairMarketType
 )
 
 # 导出传输类型枚举
@@ -25,6 +26,7 @@ __all__ = [
     'MarginType',
     'Exchange',
     'Category',
+    'TradingPairMarketType',
     # 传输枚举
     'TransferType',
 ]

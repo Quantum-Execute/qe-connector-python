@@ -1,6 +1,7 @@
-from typing import Union, Optional
-from qe.lib.utils import check_required_parameters
+from typing import Union
+
 from qe.lib.trading_enums import Algorithm, Exchange, MarketType, OrderSide, StrategyType, MarginType
+from qe.lib.utils import check_required_parameters
 
 
 def get_master_orders(self, **kwargs):
@@ -20,7 +21,7 @@ def get_master_orders(self, **kwargs):
         endTime (str, optional): End time filter
         recvWindow (int, optional): The value cannot be greater than 60000
     """
-    url_path = "/user/trading/master-orders"
+    url_path = "/trading/master-orders"
     return self.sign_request("GET", url_path, {**kwargs})
 
 
@@ -41,18 +42,18 @@ def get_order_fills(self, **kwargs):
         endTime (str, optional): End time filter
         recvWindow (int, optional): The value cannot be greater than 60000
     """
-    url_path = "/user/trading/order-fills"
+    url_path = "/trading/order-fills"
     return self.sign_request("GET", url_path, {**kwargs})
 
 
-def create_master_order(self, 
-                       algorithm: Union[Algorithm, str],
-                       exchange: Union[Exchange, str],
-                       symbol: str,
-                       marketType: Union[MarketType, str],
-                       side: Union[OrderSide, str],
-                       apiKeyId: str,
-                       **kwargs):
+def create_master_order(self,
+                        algorithm: Union[Algorithm, str],
+                        exchange: Union[Exchange, str],
+                        symbol: str,
+                        marketType: Union[MarketType, str],
+                        side: Union[OrderSide, str],
+                        apiKeyId: str,
+                        **kwargs):
     """Create master order (USER_DATA)
     
     Create a new master order
@@ -99,13 +100,13 @@ def create_master_order(self,
         marketType = marketType.value
     if isinstance(side, OrderSide):
         side = side.value
-    
+
     # 处理可选参数中的枚举
     if 'strategyType' in kwargs and isinstance(kwargs['strategyType'], StrategyType):
         kwargs['strategyType'] = kwargs['strategyType'].value
     if 'marginType' in kwargs and isinstance(kwargs['marginType'], MarginType):
         kwargs['marginType'] = kwargs['marginType'].value
-    
+
     check_required_parameters([
         [algorithm, "algorithm"],
         [exchange, "exchange"],
@@ -114,7 +115,7 @@ def create_master_order(self,
         [side, "side"],
         [apiKeyId, "apiKeyId"]
     ])
-    
+
     params = {
         "algorithm": algorithm,
         "algorithmType": "TWAP",  # 固定值，与 Go 版本保持一致
@@ -124,23 +125,23 @@ def create_master_order(self,
         "side": side,
         "apiKeyId": apiKeyId,
     }
-    
+
     # 添加可选参数
-    for key in ['totalQuantity', 'orderNotional', 'strategyType', 'startTime', 
+    for key in ['totalQuantity', 'orderNotional', 'strategyType', 'startTime',
                 'executionDuration', 'endTime', 'limitPrice', 'mustComplete',
-                'makerRateLimit', 'povLimit', 'povMinLimit', 'marginType', 
+                'makerRateLimit', 'povLimit', 'povMinLimit', 'marginType',
                 'reduceOnly', 'notes', 'clientId', 'worstPrice', 'limitPriceString',
                 'upTolerance', 'lowTolerance', 'strictUpBound', 'recvWindow']:
         if key in kwargs:
             params[key] = kwargs[key]
-    
+
     # 设置 tailOrderProtection 默认值（与 Go 版本保持一致）
     if 'tailOrderProtection' in kwargs:
         params['tailOrderProtection'] = kwargs['tailOrderProtection']
     else:
         params['tailOrderProtection'] = True
-    
-    url_path = "/user/trading/master-orders"
+
+    url_path = "/trading/master-orders"
     return self.sign_request("POST", url_path, params)
 
 
@@ -158,9 +159,9 @@ def cancel_master_order(self, masterOrderId: str, **kwargs):
         recvWindow (int, optional): The value cannot be greater than 60000
     """
     check_required_parameters([[masterOrderId, "masterOrderId"]])
-    
+
     params = {"masterOrderId": masterOrderId, **kwargs}
-    url_path = f"/user/trading/master-orders/{masterOrderId}/cancel"
+    url_path = f"/trading/master-orders/{masterOrderId}/cancel"
     return self.sign_request("PUT", url_path, params)
 
 
@@ -177,5 +178,5 @@ def create_listen_key(self, **kwargs):
     Returns:
         dict: Response containing listenKey, expireAt, success, and message
     """
-    url_path = "/user/trading/listen-key"
+    url_path = "/trading/listen-key"
     return self.sign_request("POST", url_path, {**kwargs})
