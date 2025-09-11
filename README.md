@@ -358,6 +358,8 @@ apis = client.list_exchange_apis(
 | **数量参数（二选一）** |
 | totalQuantity | string | 否*   | 要交易的总数量，支持字符串表示以避免精度问题，与 orderNotional 二选一，范围：>0 |
 | orderNotional | string | 否*   | 按价值下单时的金额，以计价币种为单位（如ETHUSDT为USDT数量），与 totalQuantity 二选一，范围：>0 |
+| **下单模式参数** |
+| isTargetPosition | bool | 否    | 下单模式为目标仓位下单，当为true时totalQuantity必填，orderNotional不可填，默认：false |
 | **时间参数** |
 | startTime | string | 否    | 开始执行时间（ISO 8601格式） |
 | endTime | string | 否    | 结束执行时间（ISO 8601格式） |
@@ -380,7 +382,7 @@ apis = client.list_exchange_apis(
 | marginType | string/MarginType | 否    | 合约交易保证金类型，可选值：U（U本位） |
 | notes | string | 否    | 订单备注 |
 
-*注：totalQuantity 和 orderNotional 必须传其中一个  
+*注：totalQuantity 和 orderNotional 必须传其中一个，但当 isTargetPosition 为 true 时，totalQuantity 必填且 orderNotional 不可填  
 
 **响应字段：**
 
@@ -419,6 +421,37 @@ response = client.create_master_order(
 
 if response.get('success'):
     print(f"主订单创建成功，ID: {response['masterOrderId']}")
+else:
+    print(f"创建失败：{response.get('message')}")
+```
+
+**目标仓位下单示例：**
+
+```python
+# 目标仓位下单示例 - 买入 1.5 BTC 到目标仓位
+response = client.create_master_order(
+    algorithm=Algorithm.TWAP,                      # 使用算法枚举
+    exchange=Exchange.BINANCE,                     # 使用交易所枚举
+    symbol="BTCUSDT",
+    marketType=MarketType.SPOT,                    # 使用市场类型枚举
+    side=OrderSide.BUY,                           # 使用订单方向枚举
+    apiKeyId="your-api-key-id",                   # 从 list_exchange_apis 获取
+    totalQuantity="1.5",                          # 目标数量 1.5 BTC
+    isTargetPosition=True,                        # 启用目标仓位模式
+    strategyType=StrategyType.TWAP_1,             # 使用策略类型枚举
+    startTime="2025-09-02T19:54:34+08:00",
+    endTime="2025-09-03T01:44:35+08:00",
+    executionDuration=60,                         # 60 分钟
+    mustComplete=True,                            # 必须完成全部订单
+    limitPrice="65000",                           # 最高价格 $65,000
+    upTolerance="0.1",                            # 允许超出 10%
+    lowTolerance="0.1",                           # 允许落后 10%
+    tailOrderProtection=True,                     # 尾单保护
+    notes="目标仓位订单示例"                      # 订单备注
+)
+
+if response.get('success'):
+    print(f"目标仓位订单创建成功，ID: {response['masterOrderId']}")
 else:
     print(f"创建失败：{response.get('message')}")
 ```

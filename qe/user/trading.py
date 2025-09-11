@@ -141,6 +141,14 @@ def create_master_order(self,
     else:
         params['tailOrderProtection'] = True
 
+    if 'isTargetPosition' in kwargs:
+        params['isTargetPosition'] = kwargs['isTargetPosition']
+        if kwargs['isTargetPosition'] is True:
+            if ('totalQuantity' not in kwargs) or ('orderNotional' in kwargs):
+                raise ValueError('totalQuantity is required and orderNotional not required when isTargetPosition is true')
+    else:
+        params['isTargetPosition'] = False
+
     url_path = "/trading/master-orders"
     return self.sign_request("POST", url_path, params)
 
