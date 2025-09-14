@@ -349,40 +349,43 @@ apis = client.list_exchange_apis(
 | 参数名 | 类型 | 是否必传 | 描述 |
 |--------|------|------|------|
 | **基础参数** |
-| algorithm | string/Algorithm | 是    | 交易算法，可选值：TWAP、VWAP、POV |
+| strategyType | string/StrategyType | 是    | 策略类型，可选值：TWAP-1、POV |
+| algorithm | string/Algorithm | 是    | 交易算法。strategyType=TWAP-1时，可选值：TWAP、VWAP；strategyType=POV时，可选值：POV |
 | exchange | string/Exchange | 是    | 交易所名称，可选值：Binance |
-| symbol | string | 是    | 交易对符号（如：BTCUSDT） |
-| marketType | string/MarketType | 是    | 市场类型，可选值：SPOT（现货）、PERP（合约） |
-| side | string/OrderSide | 是    | 1.如果isTargetPosition=False：side代表交易方向，可选值：buy（买入）、sell（卖出）。合约交易时可与reduceOnly组合：reduceOnly=True时，buy代表买入平空，sell代表卖出平多。2.如果isTargetPosition=True：side代表仓位方向，可选值：buy（多头）、sell（空头）。【仅合约交易时需传入】 |
-| apiKeyId | string | 是    | 指定使用的 API 密钥 ID |
+| symbol | string | 是    | 交易对符号（如：BTCUSDT）（可用交易对查询） |
+| marketType | string/MarketType | 是    | 可选值：SPOT（现货）、PERP（永续合约） |
+| side | string/OrderSide | 是    | 1.如果isTargetPosition=False：side代表交易方向，可选值：buy（买入）、sell（卖出）；合约交易时可与reduceOnly组合，reduceOnly=True时：buy代表买入平空，sell代表卖出平多。2.如果isTargetPosition=True：side代表仓位方向，可选值：buy（多头）、sell（空头）。【仅合约交易时需传入】 |
+| apiKeyId | string | 是    | 指定使用的 API Key ID，这将决定您本次下单使用哪个交易所账户执行 |
 | **数量参数（二选一）** |
-| totalQuantity | string | 否*   | 要交易的总数量，支持字符串表示以避免精度问题，与 orderNotional 二选一，输入范围：>0 |
-| orderNotional | string | 否*   | 按价值下单时的金额，以计价币种为单位（如ETHUSDT为USDT数量），与 totalQuantity 二选一，输入范围：>0 |
+| totalQuantity | float64 | 否*   | 要交易的总数量，支持字符串表示以避免精度问题，与 orderNotional 二选一，输入范围：>0 |
+| orderNotional | float64 | 否*   | 按价值下单时的金额，以计价币种为单位（如ETHUSDT为USDT数量），与 totalQuantity 二选一，输入范围：>0 |
 | **下单模式参数** |
-| isTargetPosition | bool | 否    | 下单模式为目标仓位下单，当为true时totalQuantity必填，orderNotional不可填，默认：false |
+| isTargetPosition | bool | 否    | 是否为目标仓位下单，默认为 false |
 | **时间参数** |
-| startTime | string | 否    | 开始执行时间（ISO 8601格式） |
-| endTime | string | 否    | 结束执行时间（ISO 8601格式） |
-| executionDuration | int | 否    | 订单的有效时间（分钟），范围：>1 |
-| **策略参数** |
-| strategyType | string/StrategyType | 是    | 策略类型，如：TWAP_1、POV |
+| startTime | string | 否    | 交易执行的启动时间，传入格式：ISO 8601(2025-09-03T01:30:00+08:00)，若不传入，则立即执行 |
+| executionDuration | int32 | 否    | 订单最大执行时长，分钟，范围>=1 |
 | **TWAP/VWAP 算法参数** |
-| mustComplete | bool | 否    | 是否一定要在duration之内执行完，选false则不会追进度，默认：true |
-| makerRateLimit | string | 否    | 要求maker占比超过该值（优先级低于mustcomplete），范围：0-1，默认："0" |
-| povLimit | string | 否    | 占市场成交量比例限制，优先级低于mustcomplete，范围：0-1，默认："0.8" |
-| limitPrice | string | 否    | 最高/低允许交易的价格，买的话就是最高价，卖就是最低价，超出范围停止交易，填"-1"不限制，范围：>0，默认："-1" |
-| upTolerance | string | 否    | 允许超出schedule的容忍度，比如0.1就是执行过程中允许比目标进度超出母单数量的10%，范围：>0且<1，默认：-1 |
-| lowTolerance | string | 否    | 允许落后schedule的容忍度，范围：>0且<1，默认：-1 |
-| strictUpBound | bool | 否    | 是否追求严格小于uptolerance，开启后可能会把很小的母单也拆的很细，不建议开启，默认：false |
-| tailOrderProtection | bool | 否    | 尾单必须taker扫完，如果false则允许省一点，小于交易所最小发单量，默认：true |
+| mustComplete | bool | 否    | 是否一定要在executionDuration之内执行完毕，选false则不会追赶进度，默认：true |
+| makerRateLimit | float64 | 否    | 要求maker占比超过该值，输入范围：0-1（输入0.1代表10%），默认：-1(算法智能计算推荐值执行) |
+| povLimit | string | 否    | 占市场成交量比例上限，优先级低于mustComplete，输入范围：0-1（输入0.1代表10%），默认：0.8 |
+| limitPrice | float64 | 否    | 最高/低允许交易的价格，买入时该字段象征最高买入价，卖出时该字段象征最低卖出价，若市价超出范围则停止交易，范围：>0，默认：-1，代表无限制 |
+| upTolerance | string | 否    | 允许超出目标进度的最大容忍度，比如0.1就是执行过程中允许比目标进度超出母单数量的10%，范围：0-1（不含0、1），默认：-1（即无容忍） |
+| lowTolerance | string | 否    | 允许落后目标进度的最大容忍度，比如0.1就是执行过程中允许比目标进度落后母单数量的10%，范围：0-1（不含0、1），默认：-1（即无容忍） |
+| strictUpBound | bool | 否    | 表达是否追求严格小于uptolerance，开启后可能会把很小的母单也拆的很细，不建议开启，默认：false |
+| tailOrderProtection | bool | 否    | 订单余量小于交易所最小发单量时，是否必须taker扫完，如果false，则订单余量小于交易所最小发单量时，订单结束执行；如果true，则订单余量随最近一笔下单全额执行（可能会提高Taker率），默认：true |
 | **POV 算法参数** |
-| povMinLimit | string | 否    | 占市场成交量比例下限，范围：小于max(POVLimit-0.01,0)，默认："0" |
+| makerRateLimit | float64 | 否    | 要求maker占比超过该值，输入范围：0-1（输入0.1代表10%），默认：-1(算法智能计算推荐值执行) |
+| povLimit | string | 否    | 占市场成交量比例上限，输入范围：0-0.5（povMinLimit < max(povLimit-0.01,0)），默认：0 |
+| povMinLimit | float64 | 否    | 占市场成交量比例下限，范围：小于max(POVLimit-0.01,0)，默认：0（即无下限） |
+| limitPrice | float64 | 否    | 最高/低允许交易的价格，买入时该字段象征最高买入价，卖出时该字段象征最低卖出价，若市价超出范围则停止交易，范围：>0，默认：-1，代表无限制 |
+| strictUpBound | bool | 否    | 是否追求严格小于povLimit，开启后可能会把很小的母单也拆的很细，比如50u拆成10个5u，不建议开启，算法的每个order会权衡盘口流动性，默认：false |
+| tailOrderProtection | bool | 否    | 订单余量小于交易所最小发单量时，是否必须taker扫完，如果false，则订单余量小于交易所最小发单量时，订单结束执行；如果true，则订单余量随最近一笔下单全额执行（可能会提高Taker率），默认：true |
 | **其他参数** |
-| reduceOnly | bool | 否    | 合约交易时是否仅减仓，默认：false |
-| marginType | string/MarginType | 否    | 合约交易保证金类型，可选值：U（U本位） |
+| reduceOnly | bool | 否    | 合约交易时是否仅减仓，默认值：false |
+| marginType | string/MarginType | 否    | 合约交易保证金类型，可选值：U（U本位），默认：U（暂时只支持U本位永续合约） |
 | notes | string | 否    | 订单备注 |
 
-*注：totalQuantity 和 orderNotional 必须传其中一个，但当 isTargetPosition 为 true 时，totalQuantity 必填且 orderNotional 不可填  
+*注：totalQuantity 和 orderNotional 必须传其中一个，但当 isTargetPosition 为 true 时，totalQuantity 必填代表目标仓位数量且 orderNotional 不可填  
 
 **响应字段：**
 
