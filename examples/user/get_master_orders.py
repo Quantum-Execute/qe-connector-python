@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import logging
+
+from qe.lib import MasterOrderStatus
 from qe.user import User as Client
 from qe.lib.utils import config_logging
 from qe.error import ClientError, APIError
@@ -23,7 +25,7 @@ try:
     response = client.get_master_orders(
         page=1,
         pageSize=20,
-        status="FILLED",  # PENDING, WORKING, FILLED, CANCELLED, FAILED
+        status=MasterOrderStatus.NEW,  # PENDING, WORKING, FILLED, CANCELLED, FAILED
         exchange="binance",
         symbol="BTCUSDT",
         startTime="2024-01-01T00:00:00Z",

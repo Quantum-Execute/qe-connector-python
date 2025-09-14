@@ -353,11 +353,11 @@ apis = client.list_exchange_apis(
 | exchange | string/Exchange | 是    | 交易所名称，可选值：Binance |
 | symbol | string | 是    | 交易对符号（如：BTCUSDT） |
 | marketType | string/MarketType | 是    | 市场类型，可选值：SPOT（现货）、PERP（合约） |
-| side | string/OrderSide | 是    | 买卖方向，可选值：buy（买入）、sell（卖出） |
+| side | string/OrderSide | 是    | 1.如果isTargetPosition=False：side代表交易方向，可选值：buy（买入）、sell（卖出）。合约交易时可与reduceOnly组合：reduceOnly=True时，buy代表买入平空，sell代表卖出平多。2.如果isTargetPosition=True：side代表仓位方向，可选值：buy（多头）、sell（空头）。【仅合约交易时需传入】 |
 | apiKeyId | string | 是    | 指定使用的 API 密钥 ID |
 | **数量参数（二选一）** |
-| totalQuantity | string | 否*   | 要交易的总数量，支持字符串表示以避免精度问题，与 orderNotional 二选一，范围：>0 |
-| orderNotional | string | 否*   | 按价值下单时的金额，以计价币种为单位（如ETHUSDT为USDT数量），与 totalQuantity 二选一，范围：>0 |
+| totalQuantity | string | 否*   | 要交易的总数量，支持字符串表示以避免精度问题，与 orderNotional 二选一，输入范围：>0 |
+| orderNotional | string | 否*   | 按价值下单时的金额，以计价币种为单位（如ETHUSDT为USDT数量），与 totalQuantity 二选一，输入范围：>0 |
 | **下单模式参数** |
 | isTargetPosition | bool | 否    | 下单模式为目标仓位下单，当为true时totalQuantity必填，orderNotional不可填，默认：false |
 | **时间参数** |
