@@ -11,5 +11,5 @@ def list_exchange_apis(self, **kwargs):
         exchange (str, optional): Exchange name filter
         recvWindow (int, optional): The value cannot be greater than 60000
     """
-    url_path = "/exchange-apis"
+    url_path = "/user/exchange-apis"
     return self.sign_request("GET", url_path, {**kwargs})

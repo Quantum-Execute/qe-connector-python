@@ -20,5 +20,5 @@ def trading_pairs(self, **kwargs):
     if 'marketType' in kwargs and isinstance(kwargs['marketType'], TradingPairMarketType):
         kwargs['marketType'] = kwargs['marketType'].value
     
-    url_path = "/trading-pairs"
+    url_path = "/pub/trading-pairs"
     return self.query(url_path, {**kwargs})

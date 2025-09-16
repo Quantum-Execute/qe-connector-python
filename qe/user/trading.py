@@ -21,7 +21,7 @@ def get_master_orders(self, **kwargs):
         endTime (str, optional): End time filter
         recvWindow (int, optional): The value cannot be greater than 60000
     """
-    url_path = "/trading/master-orders"
+    url_path = "/user/trading/master-orders"
     return self.sign_request("GET", url_path, {**kwargs})
 
 
@@ -42,7 +42,7 @@ def get_order_fills(self, **kwargs):
         endTime (str, optional): End time filter
         recvWindow (int, optional): The value cannot be greater than 60000
     """
-    url_path = "/trading/order-fills"
+    url_path = "/user/trading/order-fills"
     return self.sign_request("GET", url_path, {**kwargs})
 
 
@@ -149,7 +149,7 @@ def create_master_order(self,
     else:
         params['isTargetPosition'] = False
 
-    url_path = "/trading/master-orders"
+    url_path = "/user/trading/master-orders"
     return self.sign_request("POST", url_path, params)
 
 
@@ -169,7 +169,7 @@ def cancel_master_order(self, masterOrderId: str, **kwargs):
     check_required_parameters([[masterOrderId, "masterOrderId"]])
 
     params = {"masterOrderId": masterOrderId, **kwargs}
-    url_path = f"/trading/master-orders/{masterOrderId}/cancel"
+    url_path = f"/user/trading/master-orders/{masterOrderId}/cancel"
     return self.sign_request("PUT", url_path, params)
 
 
@@ -186,5 +186,5 @@ def create_listen_key(self, **kwargs):
     Returns:
         dict: Response containing listenKey, expireAt, success, and message
     """
-    url_path = "/trading/listen-key"
+    url_path = "/user/trading/listen-key"
     return self.sign_request("POST", url_path, {**kwargs})
