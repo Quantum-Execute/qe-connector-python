@@ -299,7 +299,6 @@ except Exception as e:
 | ├─ exchange | string | 交易所名称（如：Binance、OKX、Bybit） |
 | ├─ apiKey | string | 交易所 API Key（部分隐藏） |
 | ├─ verificationMethod | string | API 验证方式（如：OAuth、API） |
-| ├─ balance | float | 账户余额（美元） |
 | ├─ status | string | API 状态：正常、异常（不可用） |
 | ├─ isValid | bool | API 是否有效 |
 | ├─ isTradingEnabled | bool | 是否开启交易权限 |
@@ -323,7 +322,6 @@ API 信息：
     账户: {api['accountName']}
     交易所: {api['exchange']}
     状态: {api['status']}
-    余额: ${api['balance']:.2f}
     交易权限: {'开启' if api['isTradingEnabled'] else '关闭'}
     是否默认: {'是' if api['isDefault'] else '否'}
     是否PM账户: {'是' if api['isPm'] else '否'}
@@ -891,8 +889,6 @@ def check_api_key_status(client):
     for api in apis['items']:
         if not api['isValid']:
             print(f"警告: API {api['id']} ({api['accountName']}) 状态异常")
-        if api['balance'] < 100:
-            print(f"警告: 账户 {api['accountName']} 余额不足 (${api['balance']:.2f})")
 ```
 
 ### 2. 订单监控
