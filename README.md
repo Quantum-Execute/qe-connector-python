@@ -70,7 +70,7 @@ from qe.lib import Algorithm, Exchange, MarketType, OrderSide, StrategyType, Mar
 
 # 可用的枚举值
 print("算法类型:", [algo.value for algo in Algorithm])           # ['TWAP', 'VWAP', 'POV']
-print("交易所:", [exchange.value for exchange in Exchange])     # ['Binance']
+print("交易所:", [exchange.value for exchange in Exchange])     # ['Binance', 'OKX']
 print("市场类型:", [market.value for market in MarketType])     # ['SPOT', 'PERP']
 print("订单方向:", [side.value for side in OrderSide])         # ['buy', 'sell']
 print("策略类型:", [strategy.value for strategy in StrategyType]) # ['TWAP_1', 'POV']
@@ -79,7 +79,7 @@ print("保证金类型:", [margin.value for margin in MarginType])   # ['U']
 # 使用枚举创建订单（推荐）
 response = client.create_master_order(
     algorithm=Algorithm.TWAP,        # 而不是 "TWAP"
-    exchange=Exchange.BINANCE,       # 而不是 "Binance"
+    exchange=Exchange.BINANCE,  # 或 Exchange.OKX       # 而不是 "Binance"（支持 Binance、OKX）
     marketType=MarketType.SPOT,      # 而不是 "SPOT"
     side=OrderSide.BUY,             # 而不是 "buy"
     # ... 其他参数
@@ -173,7 +173,7 @@ except Exception as e:
 |--------|------|----------|------|
 | page | int | 否 | 页码 |
 | pageSize | int | 否 | 每页数量 |
-| exchange | str | 否 | 交易所名称筛选 |
+| exchange | str | 否 | 交易所名称筛选，可选值：Binance、OKX |
 | marketType | str/TradingPairMarketType | 否 | 市场类型筛选，可选值：SPOT（现货）、FUTURES（合约） |
 | isCoin | bool | 否 | 是否为币种筛选 |
 
@@ -237,7 +237,7 @@ except Exception as e:
 try:
     # 获取币安现货交易对
     spot_pairs = pub_client.trading_pairs(
-        exchange=Exchange.BINANCE,
+        exchange=Exchange.BINANCE,  # 或 Exchange.OKX  # 或 Exchange.OKX
         marketType=TradingPairMarketType.SPOT,  # 使用枚举
         page=1,
         pageSize=10
@@ -263,7 +263,7 @@ except Exception as e:
 try:
     # 使用字符串参数
     spot_pairs = pub_client.trading_pairs(
-        exchange="Binance",
+        exchange="Binance",  # 或 "OKX"
         marketType="SPOT",  # 使用字符串
         page=1,
         pageSize=5
@@ -286,7 +286,7 @@ except Exception as e:
 |--------|------|----------|------|
 | page | int | 否 | 页码 |
 | pageSize | int | 否 | 每页数量 |
-| exchange | str | 否 | 交易所名称筛选 |
+| exchange | str | 否 | 交易所名称筛选，可选值：Binance、OKX |
 
 **响应字段：**
 
@@ -332,7 +332,7 @@ API 信息：
 apis = client.list_exchange_apis(
     page=1,
     pageSize=10,
-    exchange="binance"
+    exchange="binance"  # 或 "okx"
 )
 ```
 
@@ -349,7 +349,7 @@ apis = client.list_exchange_apis(
 | **基础参数** |
 | strategyType | string/StrategyType | 是    | 策略类型，可选值：TWAP-1、POV |
 | algorithm | string/Algorithm | 是    | 交易算法。strategyType=TWAP-1时，可选值：TWAP、VWAP；strategyType=POV时，可选值：POV |
-| exchange | string/Exchange | 是    | 交易所名称，可选值：Binance |
+| exchange | string/Exchange | 是    | 交易所名称，可选值：Binance、OKX |
 | symbol | string | 是    | 交易对符号（如：BTCUSDT）（可用交易对查询） |
 | marketType | string/MarketType | 是    | 可选值：SPOT（现货）、PERP（永续合约） |
 | side | string/OrderSide | 是    | 1.如果isTargetPosition=False：side代表交易方向，可选值：buy（买入）、sell（卖出）；合约交易时可与reduceOnly组合，reduceOnly=True时：buy代表买入平空，sell代表卖出平多。2.如果isTargetPosition=True：side代表仓位方向，可选值：buy（多头）、sell（空头）。【仅合约交易时需传入】 |
@@ -402,7 +402,7 @@ from qe.lib import Algorithm, Exchange, MarketType, OrderSide, StrategyType, Mar
 # TWAP 订单示例 - 使用枚举创建订单（推荐）
 response = client.create_master_order(
     algorithm=Algorithm.TWAP,                      # 使用算法枚举
-    exchange=Exchange.BINANCE,                     # 使用交易所枚举
+    exchange=Exchange.BINANCE,  # 或 Exchange.OKX                     # 使用交易所枚举（Binance 或 OKX）
     symbol="BTCUSDT",
     marketType=MarketType.SPOT,                    # 使用市场类型枚举
     side=OrderSide.BUY,                           # 使用订单方向枚举
@@ -432,7 +432,7 @@ else:
 # 目标仓位下单示例 - 买入 1.5 BTC 到目标仓位
 response = client.create_master_order(
     algorithm=Algorithm.TWAP,                      # 使用算法枚举
-    exchange=Exchange.BINANCE,                     # 使用交易所枚举
+    exchange=Exchange.BINANCE,  # 或 Exchange.OKX                     # 使用交易所枚举（Binance 或 OKX）
     symbol="BTCUSDT",
     marketType=MarketType.SPOT,                    # 使用市场类型枚举
     side=OrderSide.BUY,                           # 使用订单方向枚举
@@ -463,7 +463,7 @@ else:
 # POV 合约订单示例 - 使用枚举
 response = client.create_master_order(
     algorithm=Algorithm.POV,                       # POV 算法
-    exchange=Exchange.BINANCE,
+    exchange=Exchange.BINANCE,  # 或 Exchange.OKX
     symbol="BTCUSDT",
     marketType=MarketType.PERP,                    # 合约市场
     side=OrderSide.SELL,                          # 卖出
@@ -495,7 +495,7 @@ if response.get('success'):
 | page | int | 否 | 页码 |           
 | pageSize | int | 否 | 每页数量 |
 | status | string | 否 | 订单状态筛选，可选值：NEW（执行中）、COMPLETED（已完成） |
-| exchange | string | 否 | 交易所名称筛选 |
+| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX |
 | symbol | string | 否 | 交易对筛选 |
 | startTime | string | 否 | 开始时间筛选 |
 | endTime | string | 否 | 结束时间筛选 |
@@ -1322,6 +1322,7 @@ except KeyboardInterrupt:
 | 枚举值 | 描述 |
 |--------|------|
 | Binance | 币安 |
+| OKX | OKX |
 
 **保证金类型 (MarginType)：**
 
