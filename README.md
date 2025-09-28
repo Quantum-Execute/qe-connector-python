@@ -513,7 +513,7 @@ if response.get('success'):
 | ├─ marketType | string | 市场类型 |
 | ├─ side | string | 买卖方向 |
 | ├─ totalQuantity | float | 总数量 |        
-| ├─ filledQuantity | float | 已成交数量 |   
+| ├─ filledQuantity | float | 1.按币数下单时，该字段代表已成交币数。2.按金额下单时，该字段值代表已成交金额 |   
 | ├─ averagePrice | float | 平均成交价 |
 | ├─ status | string | 状态：NEW（创建，未执行）、WAITING（等待中）、PROCESSING（执行中，且未完成）、PAUSED（已暂停）、CANCEL（取消中）、CANCELLED（已取消）、COMPLETED（已完成）、REJECTED（已拒绝）、EXPIRED（已过期）、CANCEL_REJECT（取消被拒绝） |
 | ├─ executionDuration | int | 执行时长（分钟） |
@@ -526,7 +526,7 @@ if response.get('success'):
 | ├─ marginType | string | 保证金类型（U:U本位） |
 | ├─ reduceOnly | bool | 是否仅减仓 |
 | ├─ strategyType | string | 策略类型 |
-| ├─ orderNotional | string | 订单金额（USDT） |
+| ├─ orderNotional | string | 订单金额（按成交额提交的下单数量） |
 | ├─ mustComplete | bool | 是否必须完成 |
 | ├─ makerRateLimit | string | 最低 Maker 率 |
 | ├─ povLimit | string | 最大市场成交量占比 |
@@ -539,11 +539,11 @@ if response.get('success'):
 | ├─ strictUpBound | bool | 严格上界 |
 | ├─ ticktimeMs | int64 | 发单时间戳（epoch 毫秒） |
 | ├─ category | string | 交易品种（spot 或 perp） |
-| ├─ filledAmount | float | 成交金额 |
+| ├─ filledAmount | float | 成交币数 |
 | ├─ totalValue | float | 成交总值 |
 | ├─ base | string | 基础币种 |
 | ├─ quote | string | 计价币种 |
-| ├─ completionProgress | float | 完成进度（0-1） |
+| ├─ completionProgress | float | 完成进度（0-100）返回50代表50%  |
 | ├─ reason | string | 原因（如取消原因） |
 | total | int | 总数 |
 | page | int | 当前页码 |
