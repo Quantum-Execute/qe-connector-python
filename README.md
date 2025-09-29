@@ -369,7 +369,7 @@ apis = client.list_exchange_apis(
 | limitPrice | float | 否    | 最高/低允许交易的价格，买入时该字段象征最高买入价，卖出时该字段象征最低卖出价，若市价超出范围则停止交易，范围：>0，默认：-1，代表无限制 |
 | upTolerance | string | 否    | 允许超出目标进度的最大容忍度，比如0.1就是执行过程中允许比目标进度超出母单数量的10%，范围：0-1（不含0、1），默认：-1（即无容忍） |
 | lowTolerance | string | 否    | 允许落后目标进度的最大容忍度，比如0.1就是执行过程中允许比目标进度落后母单数量的10%，范围：0-1（不含0、1），默认：-1（即无容忍） |
-| strictUpBound | bool | 否    | 表达是否追求严格小于uptolerance，开启后可能会把很小的母单也拆的很细，不建议开启，默认：false |
+| strictUpBound | bool | 否    | 是否严格小于uptolerance，开启后会更加严格贴近交易进度执行，同时可能会把母单拆很细；如需严格控制交易进度则建议开启，其他场景建议不开启，默认：false |
 | tailOrderProtection | bool | 否    | 订单余量小于交易所最小发单量时，是否必须taker扫完，如果false，则订单余量小于交易所最小发单量时，订单结束执行；如果true，则订单余量随最近一笔下单全额执行（可能会提高Taker率），默认：true |
 | **POV 算法参数** |
 | makerRateLimit | float | 否    | 要求maker占比超过该值，输入范围：0-1（输入0.1代表10%），默认：-1(算法智能计算推荐值执行) |
@@ -411,11 +411,12 @@ response = client.create_master_order(
     strategyType=StrategyType.TWAP_1,             # 使用策略类型枚举
     startTime="2025-09-02T19:54:34+08:00",
     endTime="2025-09-03T01:44:35+08:00",
-    executionDuration="5",                        # 5 秒间隔
+    executionDuration="5",                        # 5 分钟
     mustComplete=True,                            # 必须完成全部订单
     worstPrice=-1,                               # -1 表示无价格限制
     upTolerance="-1",                            # 允许超出容忍度
     lowTolerance="-1",                           # 允许落后容忍度
+    strictUpBound=False,                         # 不追求严格小于uptolerance
     tailOrderProtection=True,                    # 尾单保护
     notes="测试 TWAP 订单"                       # 订单备注
 )
@@ -447,6 +448,7 @@ response = client.create_master_order(
     limitPrice="65000",                           # 最高价格 $65,000
     upTolerance="0.1",                            # 允许超出 10%
     lowTolerance="0.1",                           # 允许落后 10%
+    strictUpBound=False,                          # 不追求严格小于uptolerance
     tailOrderProtection=True,                     # 尾单保护
     notes="目标仓位订单示例"                      # 订单备注
 )
@@ -457,27 +459,26 @@ else:
     print(f"创建失败：{response.get('message')}")
 ```
 
-**POV 合约订单示例：**
+**POV 算法示例：**
 
 ```python
-# POV 合约订单示例 - 使用枚举
+# POV 订单示例 - 按市场成交量比例买入 BTC
 response = client.create_master_order(
     algorithm=Algorithm.POV,                       # POV 算法
     exchange=Exchange.BINANCE,  # 或 Exchange.OKX
     symbol="BTCUSDT",
-    marketType=MarketType.PERP,                    # 合约市场
-    side=OrderSide.SELL,                          # 卖出
+    marketType=MarketType.SPOT,                    # 现货市场
+    side=OrderSide.BUY,                           # 买入
     apiKeyId="your-api-key-id",
-    orderNotional="1000",                         # $1000 名义价值
-    strategyType=StrategyType.POV,                # POV 策略
-    startTime="2025-09-02T19:54:34+08:00",
-    endTime="2025-09-03T01:44:35+08:00",
-    povLimit=0.2,                                 # 占市场成交量 20%
+    totalQuantity="1.5",                          # 买入 1.5 BTC
+    executionDuration=60,                         # 60 分钟
+    povLimit=0.1,                                 # 占市场成交量 10%
     povMinLimit=0.05,                             # 最低占市场成交量 5%
-    marginType=MarginType.U,                      # U本位保证金
-    reduceOnly=False,
-    mustComplete=True,
-    notes="POV 合约订单示例"
+    strictUpBound=False,                          # 不追求严格小于povLimit
+    limitPrice=65000,                             # 最高价格 $65,000
+    tailOrderProtection=True,
+    strategyType=StrategyType.TWAP_1,             # 使用策略类型枚举
+    notes="POV 订单示例"
 )
 
 if response.get('success'):
@@ -578,6 +579,7 @@ for order in orders['items']:
     平均价格: ${order.get('averagePrice', 0):.2f}
     已成交: {order['filledQuantity']} / {order['totalQuantity']}
     成交金额: ${order.get('filledAmount', 0):.2f}
+    Maker率: {order.get('takerMakerRate', 0) * 100:.2f}%
     创建时间: {order['createdAt']}
     发单日期: {order.get('date', 'N/A')}
     上容忍度: {order.get('upTolerance', 'N/A')}
