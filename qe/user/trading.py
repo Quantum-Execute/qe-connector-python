@@ -131,7 +131,7 @@ def create_master_order(self,
                 'executionDuration', 'endTime', 'limitPrice', 'mustComplete',
                 'makerRateLimit', 'povLimit', 'povMinLimit', 'marginType',
                 'reduceOnly', 'notes', 'clientId', 'worstPrice', 'limitPriceString',
-                'upTolerance', 'lowTolerance', 'strictUpBound', 'recvWindow']:
+                'upTolerance', 'lowTolerance', 'strictUpBound', 'recvWindow', 'isMargin']:
         if key in kwargs:
             params[key] = kwargs[key]
 
