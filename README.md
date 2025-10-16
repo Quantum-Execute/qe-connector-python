@@ -601,6 +601,7 @@ for order in orders['items']:
 | masterOrderId | string | 否 | 主订单 ID 筛选 |
 | subOrderId | string | 否 | 子订单 ID 筛选 |
 | symbol | string | 否 | 交易对筛选 |
+| status | string | 否 | 订单状态筛选，多个状态用逗号分隔，如：PLACED,FILLED。支持的状态：PLACED（已下单）、REJECTED（已拒单）、CANCELLED（算法已撤单）、FILLED（完全成交）、Cancelack（交易已撤单）、CANCEL_REJECTED（拒绝撤单） |
 | startTime | string | 否 | 开始时间筛选 |
 | endTime | string | 否 | 结束时间筛选 |
 
@@ -646,6 +647,23 @@ fills = client.get_order_fills(
     symbol="BTCUSDT",
     startTime="2024-01-01T00:00:00Z",
     endTime="2024-01-01T23:59:59Z"
+)
+
+# 查询特定状态的成交记录
+fills = client.get_order_fills(
+    status="FILLED,CANCELLED",  # 查询已成交和已撤单的记录
+    symbol="BTCUSDT",
+    page=1,
+    pageSize=50
+)
+
+# 查询被拒绝的订单
+fills = client.get_order_fills(
+    status="REJECTED",
+    startTime="2024-01-01T00:00:00Z",
+    endTime="2024-01-31T23:59:59Z",
+    page=1,
+    pageSize=100
 )
 
 # 统计成交信息

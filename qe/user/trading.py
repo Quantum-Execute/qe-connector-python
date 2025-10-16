@@ -17,6 +17,7 @@ def get_master_orders(self, **kwargs):
         status (str, optional): Order status filter
         exchange (str, optional): Exchange name filter
         symbol (str, optional): Trading symbol filter
+        status (str, optional): Trading status filter
         startTime (str, optional): Start time filter
         endTime (str, optional): End time filter
         recvWindow (int, optional): The value cannot be greater than 60000
@@ -38,6 +39,7 @@ def get_order_fills(self, **kwargs):
         masterOrderId (str, optional): Master order ID filter
         subOrderId (str, optional): Sub order ID filter
         symbol (str, optional): Trading symbol filter
+        status (str, optional): Order status filter, multiple statuses separated by comma, e.g. PLACED,FILLED. Supported statuses: PLACED, REJECTED, CANCELLED, FILLED, Cancelack, CANCEL_REJECTED
         startTime (str, optional): Start time filter
         endTime (str, optional): End time filter
         recvWindow (int, optional): The value cannot be greater than 60000
