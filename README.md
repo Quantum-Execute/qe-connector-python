@@ -348,7 +348,7 @@ apis = client.list_exchange_apis(
 |--------|------|------|------|
 | **基础参数** |
 | strategyType | string/StrategyType | 是    | 策略类型，可选值：TWAP-1、POV |
-| algorithm | string/Algorithm | 是    | 交易算法。strategyType=TWAP-1时，可选值：TWAP、VWAP；strategyType=POV时，可选值：POV |
+| algorithm | string/Algorithm | 是    | 交易算法。strategyType=TWAP-1时，可选值：TWAP、VWAP、BoostVWAP、BoostTWAP；strategyType=POV时，可选值：POV |
 | exchange | string/Exchange | 是    | 交易所名称，可选值：Binance、OKX |
 | symbol | string | 是    | 交易对符号（如：BTCUSDT）（可用交易对查询） |
 | marketType | string/MarketType | 是    | 可选值：SPOT（现货）、PERP（永续合约） |
@@ -381,10 +381,11 @@ apis = client.list_exchange_apis(
 | **其他参数** |
 | reduceOnly | bool | 否    | 合约交易时是否仅减仓，默认值：false |
 | marginType | string/MarginType | 否*   | **永续合约必传参数** - 合约交易保证金类型，可选值：U（U本位），默认：U（暂时只支持U本位永续合约）。当marketType为PERP（永续合约）时必传 |
-| isMargin | bool | 否    | 是否使用现货杠杆，默认值：false，仅币安现货可使用该字段 |
+| isMargin | bool | 否    | 是否使用现货杠杆。- 默认为false - 仅现货可使用该字段 |
 | notes | string | 否    | 订单备注 |
 
 *注：totalQuantity 和 orderNotional 必须传其中一个，但当 isTargetPosition 为 true 时，totalQuantity 必填代表目标仓位数量且 orderNotional 不可填  
+*注：使用BoostVWAP、BoostTWAP时，代表使用高频alpha发单。仅Binance交易所永续合约BTCUSDT、ETHUSDT交易对可用，不适用于其他交易所、交易对。
 
 **响应字段：**
 
@@ -1323,6 +1324,8 @@ except KeyboardInterrupt:
 | TWAP | TWAP算法 |
 | VWAP | VWAP算法 |
 | POV | POV算法 |
+| BoostVWAP | BoostVWAP算法（高频alpha发单） |
+| BoostTWAP | BoostTWAP算法（高频alpha发单） |
 
 **市场类型 (MarketType)：**
 
