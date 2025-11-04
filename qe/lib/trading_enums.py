@@ -46,7 +46,8 @@ class MarginType(str, Enum):
 class Exchange(str, Enum):
     """交易所枚举"""
     BINANCE = "Binance"  # 币安
-    OKX = "OKX"  # 币安
+    OKX = "OKX"  # OKX
+    LTP = "LTP"  # LTP
 
 
 class Category(str, Enum):

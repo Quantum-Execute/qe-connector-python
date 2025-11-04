@@ -10,8 +10,10 @@ from examples.utils.prepare_env import get_api_key
 config_logging(logging, logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-api_key, api_secret = get_api_key()
+api_key, api_secret,api_key_id = get_api_key()
 
+# client = Client(api_key, api_secret, base_url="http://127.0.0.1:8000/strategy-api")
+# client = Client(api_key, api_secret, base_url="https://testapiqe.ziyang-huang.com/strategy-api")
 client = Client(api_key, api_secret)
 
 try:

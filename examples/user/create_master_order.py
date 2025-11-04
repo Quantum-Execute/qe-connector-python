@@ -147,9 +147,9 @@ def run_concurrent_orders(client, api_key_id, order_params, num_orders=100):
 
 api_key, api_secret,api_key_id = get_api_key()
 
-client = Client(api_key, api_secret, base_url="http://127.0.0.1:8000/strategy-api")
+# client = Client(api_key, api_secret, base_url="http://127.0.0.1:8000/strategy-api")
 # client = Client(api_key, api_secret, base_url="https://testapiqe.ziyang-huang.com/strategy-api")
-# client = Client(api_key, api_secret)
+client = Client(api_key, api_secret)
 
 # 可选：显示所有可用的枚举值
 # show_available_enums()
@@ -163,9 +163,9 @@ try:
     logger.info("=" * 80)
     
     # 订单参数
-    startTime = "2025-10-19T23:30:00+08:00"
-    endTime = "2025-10-20T01:54:00+08:00"
-    orderNotional = -0.1
+    startTime = "2025-10-31T23:30:00+08:00"
+    endTime = "2025-11-01T01:54:00+08:00"
+    orderNotional = 0.1
     
     order_params = {
         'startTime': startTime,

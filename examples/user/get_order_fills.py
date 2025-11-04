@@ -10,8 +10,10 @@ from examples.utils.prepare_env import get_api_key
 config_logging(logging, logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-api_key, api_secret = get_api_key()
+api_key, api_secret,api_key_id = get_api_key()
 
+# client = Client(api_key, api_secret, base_url="http://127.0.0.1:8000/strategy-api")
+# client = Client(api_key, api_secret, base_url="https://testapiqe.ziyang-huang.com/strategy-api")
 client = Client(api_key, api_secret)
 
 try:
@@ -23,8 +25,8 @@ try:
     response = client.get_order_fills(
         page=1,
         pageSize=50,
-        masterOrderId="12345678",  # Filter by specific master order
-        symbol="BTCUSDT",
+        masterOrderId="DOGEUSDT-20251022-1980991331441745920",  # Filter by specific master order
+        symbol="DOGEUSDT",
         startTime="2024-01-01T00:00:00Z",
         endTime="2024-12-31T23:59:59Z"
     )

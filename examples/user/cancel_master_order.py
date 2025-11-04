@@ -10,41 +10,44 @@ from examples.utils.prepare_env import get_api_key
 config_logging(logging, logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-api_key, api_secret = get_api_key()
+api_key, api_secret,api_key_id = get_api_key()
 
+# client = Client(api_key, api_secret, base_url="http://127.0.0.1:8000/strategy-api")
+# client = Client(api_key, api_secret, base_url="https://testapiqe.ziyang-huang.com/strategy-api")
 client = Client(api_key, api_secret)
+
 
 try:
     # First, get active orders to find one to cancel
-    response = client.get_master_orders(
-        status="WORKING",  # Get only active orders
-        page=1,
-        pageSize=1
-    )
-    
-    if response.get('items'):
-        order_to_cancel = response['items'][0]
-        master_order_id = order_to_cancel['masterOrderId']
-        
-        logger.info(f"Cancelling order: {master_order_id}")
-        logger.info(f"Symbol: {order_to_cancel['symbol']}, Side: {order_to_cancel['side']}")
-        logger.info(f"Filled: {order_to_cancel['filledQuantity']}/{order_to_cancel['totalQuantity']}")
-        
-        # Cancel the order
-        cancel_response = client.cancel_master_order(
-            masterOrderId=master_order_id,
-            reason="User requested cancellation"
-        )
-        
-        if cancel_response.get('success'):
-            logger.info(f"Order cancelled successfully: {cancel_response.get('message')}")
-        else:
-            logger.error(f"Failed to cancel order: {cancel_response.get('message')}")
-    else:
-        logger.info("No active orders found to cancel")
-    
+    # response = client.get_master_orders(
+    #     status="WORKING",  # Get only active orders
+    #     page=1,
+    #     pageSize=1
+    # )
+    #
+    # if response.get('items'):
+    #     order_to_cancel = response['items'][0]
+    #     master_order_id = 'BATUSDT-20251030-1983897337069973504'
+    #
+    #     logger.info(f"Cancelling order: {master_order_id}")
+    #     logger.info(f"Symbol: {order_to_cancel['symbol']}, Side: {order_to_cancel['side']}")
+    #     logger.info(f"Filled: {order_to_cancel['filledQuantity']}/{order_to_cancel['totalQuantity']}")
+    #
+    #     # Cancel the order
+    #     cancel_response = client.cancel_master_order(
+    #         masterOrderId=master_order_id,
+    #         reason="User requested cancellation"
+    #     )
+    #
+    #     if cancel_response.get('success'):
+    #         logger.info(f"Order cancelled successfully: {cancel_response.get('message')}")
+    #     else:
+    #         logger.error(f"Failed to cancel order: {cancel_response.get('message')}")
+    # else:
+    #     logger.info("No active orders found to cancel")
+    #
     # Example: Cancel specific order by ID
-    specific_order_id = "12345678"
+    specific_order_id = "BATUSDT-20251030-1983897337069973504"
     try:
         response = client.cancel_master_order(
             masterOrderId=specific_order_id,
