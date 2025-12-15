@@ -48,6 +48,7 @@ class Exchange(str, Enum):
     BINANCE = "Binance"  # 币安
     OKX = "OKX"  # OKX
     LTP = "LTP"  # LTP
+    DERIBIT = "Deribit"  # Deribit
 
 
 class Category(str, Enum):

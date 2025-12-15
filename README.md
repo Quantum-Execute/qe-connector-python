@@ -70,7 +70,7 @@ from qe.lib import Algorithm, Exchange, MarketType, OrderSide, StrategyType, Mar
 
 # 可用的枚举值
 print("算法类型:", [algo.value for algo in Algorithm])           # ['TWAP', 'VWAP', 'POV']
-print("交易所:", [exchange.value for exchange in Exchange])     # ['Binance', 'OKX', 'LTP']
+print("交易所:", [exchange.value for exchange in Exchange])     # ['Binance', 'OKX', 'LTP', 'Deribit']
 print("市场类型:", [market.value for market in MarketType])     # ['SPOT', 'PERP']
 print("订单方向:", [side.value for side in OrderSide])         # ['buy', 'sell']
 print("策略类型:", [strategy.value for strategy in StrategyType]) # ['TWAP_1', 'POV']
@@ -79,7 +79,7 @@ print("保证金类型:", [margin.value for margin in MarginType])   # ['U']
 # 使用枚举创建订单（推荐）
 response = client.create_master_order(
     algorithm=Algorithm.TWAP,        # 而不是 "TWAP"
-    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP       # 而不是 "Binance"（支持 Binance、OKX、LTP）
+    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP、Exchange.DERIBIT       # 而不是 "Binance"（支持 Binance、OKX、LTP、Deribit）
     marketType=MarketType.SPOT,      # 而不是 "SPOT"
     side=OrderSide.BUY,             # 而不是 "buy"
     # ... 其他参数
@@ -173,7 +173,7 @@ except Exception as e:
 |--------|------|----------|------|
 | page | int | 否 | 页码 |
 | pageSize | int | 否 | 每页数量 |
-| exchange | str | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP |
+| exchange | str | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit |
 | marketType | str/TradingPairMarketType | 否 | 市场类型筛选，可选值：SPOT（现货）、FUTURES（合约） |
 | isCoin | bool | 否 | 是否为币种筛选 |
 
@@ -286,7 +286,7 @@ except Exception as e:
 |--------|------|----------|------|
 | page | int | 否 | 页码 |
 | pageSize | int | 否 | 每页数量 |
-| exchange | str | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP |
+| exchange | str | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit |
 
 **响应字段：**
 
@@ -296,7 +296,7 @@ except Exception as e:
 | ├─ id | string | API 记录的唯一标识 |
 | ├─ createdAt | string | API 添加时间 |
 | ├─ accountName | string | 账户名称（如：账户1、账户2） |
-| ├─ exchange | string | 交易所名称（如：Binance、OKX、LTP） |
+| ├─ exchange | string | 交易所名称（如：Binance、OKX、LTP、Deribit） |
 | ├─ apiKey | string | 交易所 API Key（部分隐藏） |
 | ├─ verificationMethod | string | API 验证方式（如：OAuth、API） |
 | ├─ status | string | API 状态：正常、异常（不可用） |
@@ -349,13 +349,13 @@ apis = client.list_exchange_apis(
 | **基础参数** |
 | strategyType | string/StrategyType | 是    | 策略类型，可选值：TWAP-1、POV |
 | algorithm | string/Algorithm | 是    | 交易算法。strategyType=TWAP-1时，可选值：TWAP、VWAP、BoostVWAP、BoostTWAP；strategyType=POV时，可选值：POV |
-| exchange | string/Exchange | 是    | 交易所名称，可选值：Binance、OKX、LTP |
+| exchange | string/Exchange | 是    | 交易所名称，可选值：Binance、OKX、LTP、Deribit |
 | symbol | string | 是    | 交易对符号（如：BTCUSDT）（可用交易对查询） |
 | marketType | string/MarketType | 是    | 可选值：SPOT（现货）、PERP（永续合约） |
 | side | string/OrderSide | 是    | 1.如果isTargetPosition=False：side代表交易方向，可选值：buy（买入）、sell（卖出）；合约交易时可与reduceOnly组合，reduceOnly=True时：buy代表买入平空，sell代表卖出平多。2.如果isTargetPosition=True：side代表仓位方向，可选值：buy（多头）、sell（空头）。【仅合约交易时需传入】 |
 | apiKeyId | string | 是    | 指定使用的 API Key ID，这将决定您本次下单使用哪个交易所账户执行 |
 | **数量参数（二选一）** |
-| totalQuantity | float | 否*   | 要交易的总数量，支持字符串表示以避免精度问题，与 orderNotional 二选一，输入范围：>0 |
+| totalQuantity | float | 否*   | 要交易的总数量，与 orderNotional 二选一，输入范围：>0 |
 | orderNotional | float | 否*   | 按价值下单时的金额，以计价币种为单位（如ETHUSDT为USDT数量），与 totalQuantity 二选一，输入范围：>0 |
 | **下单模式参数** |
 | isTargetPosition | bool | 否    | 是否为目标仓位下单，默认为 false |
@@ -385,6 +385,7 @@ apis = client.list_exchange_apis(
 | notes | string | 否    | 订单备注 |
 
 *注：totalQuantity 和 orderNotional 必须传其中一个，但当 isTargetPosition 为 true 时，totalQuantity 必填代表目标仓位数量且 orderNotional 不可填  
+*注：当使用 Deribit 账户下单 BTCUSD 或 ETHUSD 合约时，只能使用 totalQuantity 作为数量输入字段，且数量单位为 USD；orderNotional 当前不可用。  
 *注：使用BoostVWAP、BoostTWAP时，代表使用高频alpha发单。仅Binance交易所永续合约BTCUSDT、ETHUSDT交易对可用，不适用于其他交易所、交易对。
 
 **响应字段：**
@@ -404,12 +405,12 @@ from qe.lib import Algorithm, Exchange, MarketType, OrderSide, StrategyType, Mar
 # TWAP 订单示例 - 使用枚举创建订单（推荐）
 response = client.create_master_order(
     algorithm=Algorithm.TWAP,                      # 使用算法枚举
-    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP                     # 使用交易所枚举（Binance、OKX 或 LTP）
+    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP、Exchange.DERIBIT                     # 使用交易所枚举（Binance、OKX、LTP 或 Deribit）
     symbol="BTCUSDT",
     marketType=MarketType.SPOT,                    # 使用市场类型枚举
     side=OrderSide.BUY,                           # 使用订单方向枚举
     apiKeyId="your-api-key-id",                   # 从 list_exchange_apis 获取
-    orderNotional="200",                          # $200 名义价值
+    orderNotional=200,                            # $200 名义价值
     strategyType=StrategyType.TWAP_1,             # 使用策略类型枚举
     startTime="2025-09-02T19:54:34+08:00",
     endTime="2025-09-03T01:44:35+08:00",
@@ -435,12 +436,12 @@ else:
 # 目标仓位下单示例 - 买入 1.5 BTC 到目标仓位
 response = client.create_master_order(
     algorithm=Algorithm.TWAP,                      # 使用算法枚举
-    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP                     # 使用交易所枚举（Binance、OKX 或 LTP）
+    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP、Exchange.DERIBIT                     # 使用交易所枚举（Binance、OKX、LTP 或 Deribit）
     symbol="BTCUSDT",
     marketType=MarketType.SPOT,                    # 使用市场类型枚举
     side=OrderSide.BUY,                           # 使用订单方向枚举
     apiKeyId="your-api-key-id",                   # 从 list_exchange_apis 获取
-    totalQuantity="1.5",                          # 目标数量 1.5 BTC
+    totalQuantity=1.5,                            # 目标数量 1.5 BTC
     isTargetPosition=True,                        # 启用目标仓位模式
     strategyType=StrategyType.TWAP_1,             # 使用策略类型枚举
     startTime="2025-09-02T19:54:34+08:00",
@@ -467,12 +468,12 @@ else:
 # POV 订单示例 - 按市场成交量比例买入 BTC
 response = client.create_master_order(
     algorithm=Algorithm.POV,                       # POV 算法
-    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP
+    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP、Exchange.DERIBIT
     symbol="BTCUSDT",
     marketType=MarketType.SPOT,                    # 现货市场
     side=OrderSide.BUY,                           # 买入
     apiKeyId="your-api-key-id",
-    totalQuantity="1.5",                          # 买入 1.5 BTC
+    totalQuantity=1.5,                            # 买入 1.5 BTC
     executionDuration=60,                         # 60 分钟
     povLimit=0.1,                                 # 占市场成交量 10%
     povMinLimit=0.05,                             # 最低占市场成交量 5%
@@ -498,7 +499,7 @@ if response.get('success'):
 | page | int | 否 | 页码 |           
 | pageSize | int | 否 | 每页数量 |
 | status | string | 否 | 订单状态筛选，可选值：NEW（执行中）、COMPLETED（已完成） |
-| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP |
+| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit |
 | symbol | string | 否 | 交易对筛选 |
 | startTime | string | 否 | 开始时间筛选 |
 | endTime | string | 否 | 结束时间筛选 |
@@ -1348,6 +1349,7 @@ except KeyboardInterrupt:
 | Binance | 币安 |
 | OKX | OKX |
 | LTP | LTP |
+| Deribit | Deribit |
 
 **保证金类型 (MarginType)：**
 

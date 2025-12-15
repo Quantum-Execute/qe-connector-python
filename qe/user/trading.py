@@ -118,6 +118,14 @@ def create_master_order(self,
         [apiKeyId, "apiKeyId"]
     ])
 
+    # Deribit special rules:
+    # - When trading BTCUSD/ETHUSD, only totalQuantity is allowed, and orderNotional is not allowed.
+    if isinstance(exchange, str) and exchange == "Deribit" and symbol.upper() in {"BTCUSD", "ETHUSD"}:
+        if 'orderNotional' in kwargs and kwargs['orderNotional'] is not None:
+            raise ValueError('orderNotional is not allowed when exchange is Deribit and symbol is BTCUSD or ETHUSD; use totalQuantity (unit: USD) instead')
+        if 'totalQuantity' not in kwargs or kwargs.get('totalQuantity') is None:
+            raise ValueError('totalQuantity is required when exchange is Deribit and symbol is BTCUSD or ETHUSD (unit: USD)')
+
     params = {
         "algorithm": algorithm,
         "algorithmType": "TWAP",  # 固定值，与 Go 版本保持一致
