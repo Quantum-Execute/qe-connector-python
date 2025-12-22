@@ -27,7 +27,7 @@ try:
     response = client.get_master_orders(
         page=1,
         pageSize=20,
-        status=MasterOrderStatus.COMPLETED,  # PENDING, WORKING, FILLED, CANCELLED, FAILED
+        status=MasterOrderStatus.NEW,  # NEW COMPLETED
         exchange="binance",
         symbol="BTCUSDT",
         startTime="2024-01-01T00:00:00Z",

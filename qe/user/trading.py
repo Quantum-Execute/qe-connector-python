@@ -74,8 +74,7 @@ def create_master_order(self,
         orderNotional (float, optional): Order notional value
         strategyType (StrategyType | str, optional): Strategy type (e.g., StrategyType.TWAP_1, StrategyType.TWAP_2, StrategyType.POV)
         startTime (str, optional): Start time
-        executionDuration (str, optional): Execution duration
-        endTime (str, optional): End time
+        executionDuration (int, optional): Execution duration
         limitPrice (float, optional): Limit price
         mustComplete (bool, optional): Must complete flag
         makerRateLimit (float, optional): Maker rate limit
@@ -138,7 +137,7 @@ def create_master_order(self,
 
     # 添加可选参数
     for key in ['totalQuantity', 'orderNotional', 'strategyType', 'startTime',
-                'executionDuration', 'endTime', 'limitPrice', 'mustComplete',
+                'executionDuration', 'limitPrice', 'mustComplete',
                 'makerRateLimit', 'povLimit', 'povMinLimit', 'marginType',
                 'reduceOnly', 'notes', 'clientId', 'worstPrice', 'limitPriceString',
                 'upTolerance', 'lowTolerance', 'strictUpBound', 'recvWindow', 'isMargin']:

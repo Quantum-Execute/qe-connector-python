@@ -364,16 +364,16 @@ apis = client.list_exchange_apis(
 | executionDuration | int | 否    | 订单最大执行时长，分钟，范围>=1 |
 | **TWAP/VWAP 算法参数** |
 | mustComplete | bool | 否    | 是否一定要在executionDuration之内执行完毕，选false则不会追赶进度，默认：true |
-| makerRateLimit | float | 否    | 要求maker占比超过该值，输入范围：0-1（输入0.1代表10%），默认：-1(算法智能计算推荐值执行) |
-| povLimit | string | 否    | 占市场成交量比例上限，优先级低于mustComplete，输入范围：0-1（输入0.1代表10%），默认：0.8 |
+| makerRateLimit | float | 否    | 要求maker占比超过该值，范围：0-1（包含0和1。输入0.1代表10%），默认：-1(算法智能计算推荐值执行) |
+| povLimit | string | 否    | 占市场成交量比例上限，优先级低于mustComplete，范围：0-1（包含0和1。输入0.1代表10%），默认：0.8 |
 | limitPrice | float | 否    | 最高/低允许交易的价格，买入时该字段象征最高买入价，卖出时该字段象征最低卖出价，若市价超出范围则停止交易，范围：>0，默认：-1，代表无限制 |
-| upTolerance | string | 否    | 允许超出目标进度的最大容忍度，比如0.1就是执行过程中允许比目标进度超出母单数量的10%，范围：0-1（不含0、1），默认：-1（即无容忍） |
-| lowTolerance | string | 否    | 允许落后目标进度的最大容忍度，比如0.1就是执行过程中允许比目标进度落后母单数量的10%，范围：0-1（不含0、1），默认：-1（即无容忍） |
+| upTolerance | string | 否    | 允许超出目标进度的最大容忍度，范围：0-1（不包含0和1，最小输入0.0001，最大输入0.9999。输入0.1代表可以超前目标进度10%），默认：-1（即无容忍） |
+| lowTolerance | string | 否    | 允许落后目标进度的最大容忍度，范围：0-1（不包含0和1，最小输入0.0001，最大输入0.9999。输入0.1代表可落后目标进度10%），默认：-1（即无容忍） |
 | strictUpBound | bool | 否    | 是否严格小于uptolerance，开启后会更加严格贴近交易进度执行，同时可能会把母单拆很细；如需严格控制交易进度则建议开启，其他场景建议不开启，默认：false |
 | tailOrderProtection | bool | 否    | 订单余量小于交易所最小发单量时，是否必须taker扫完，如果false，则订单余量小于交易所最小发单量时，订单结束执行；如果true，则订单余量随最近一笔下单全额执行（可能会提高Taker率），默认：true |
 | **POV 算法参数** |
-| makerRateLimit | float | 否    | 要求maker占比超过该值，输入范围：0-1（输入0.1代表10%），默认：-1(算法智能计算推荐值执行) |
-| povLimit | string | 否    | 占市场成交量比例上限，输入范围：0-0.5（povMinLimit < max(povLimit-0.01,0)），默认：0 |
+| makerRateLimit | float | 否    | 要求maker占比超过该值（包含0和1，输入0.1代表10%），输入范围：0-1（输入0.1代表10%），默认：-1(算法智能计算推荐值执行) |
+| povLimit | string | 否    | 占市场成交量比例上限（包含0和0.5，一般建议小于0.15），输入范围：0-0.5（povMinLimit < max(povLimit-0.01,0)），默认：0 |
 | povMinLimit | float | 否    | 占市场成交量比例下限，范围：小于max(POVLimit-0.01,0)，默认：0（即无下限） |
 | limitPrice | float | 否    | 最高/低允许交易的价格，买入时该字段象征最高买入价，卖出时该字段象征最低卖出价，若市价超出范围则停止交易，范围：>0，默认：-1，代表无限制 |
 | strictUpBound | bool | 否    | 是否追求严格小于povLimit，开启后可能会把很小的母单也拆的很细，比如50u拆成10个5u，不建议开启，算法的每个order会权衡盘口流动性，默认：false |
@@ -413,8 +413,7 @@ response = client.create_master_order(
     orderNotional=200,                            # $200 名义价值
     strategyType=StrategyType.TWAP_1,             # 使用策略类型枚举
     startTime="2025-09-02T19:54:34+08:00",
-    endTime="2025-09-03T01:44:35+08:00",
-    executionDuration="5",                        # 5 分钟
+    executionDuration=5,                           # 5 分钟
     mustComplete=True,                            # 必须完成全部订单
     worstPrice=-1,                               # -1 表示无价格限制
     upTolerance="-1",                            # 允许超出容忍度
@@ -445,7 +444,6 @@ response = client.create_master_order(
     isTargetPosition=True,                        # 启用目标仓位模式
     strategyType=StrategyType.TWAP_1,             # 使用策略类型枚举
     startTime="2025-09-02T19:54:34+08:00",
-    endTime="2025-09-03T01:44:35+08:00",
     executionDuration=60,                         # 60 分钟
     mustComplete=True,                            # 必须完成全部订单
     limitPrice="65000",                           # 最高价格 $65,000
