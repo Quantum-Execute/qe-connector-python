@@ -688,6 +688,47 @@ for fill in fills['items']:
 print(f"总成交额: ${total_value:.2f}, 总手续费: ${total_fee:.2f}")
 ```
 
+#### 查询TCA分析数据
+
+获取TCA分析数据列表（strategy-api：APIKEY签名鉴权）。
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| symbol | str | 否 | 交易对筛选 |
+| category | str | 否 | 策略类别筛选 |
+| apikey | str | 否 | ApiKey id 列表，逗号分隔 |
+| startTime | int | 否 | 开始时间戳（毫秒） |
+| endTime | int | 否 | 结束时间戳（毫秒） |
+
+**响应：**
+
+成功时返回后端 `message` 字段原样（通常为 `list[dict]`）。
+
+**示例代码：**
+
+```python
+# 查询TCA分析数据
+items = client.get_tca_analysis(
+    symbol="BTCUSDT",
+    category="spot",
+    apikey="your-apikey-id",
+    startTime=1735689600000,
+    endTime=1735776000000
+)
+
+print(f"items数量: {len(items)}")
+if items:
+    first = items[0]
+    print("示例字段:")
+    print("  master_order_id:", first.get("master_order_id"))
+    print("  side:", first.get("side"))
+    print("  symbol:", first.get("symbol"))
+    print("  twap_slippage_bps:", first.get("twap_slippage_bps"))
+    print("  make_fill_rate:", first.get("make_fill_rate"))
+```
+
 #### 取消主订单
 
 取消指定的主订单。

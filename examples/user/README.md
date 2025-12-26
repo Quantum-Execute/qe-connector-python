@@ -13,6 +13,7 @@ This directory contains example scripts for using the QuantumExecute User APIs.
 - `get_order_fills.py` - Get order execution details and fills
 - `create_master_order.py` - Create new algorithmic orders (TWAP, VWAP, etc.)
 - `cancel_master_order.py` - Cancel active master orders
+- `get_tca_analysis.py` - Get TCA (Transaction Cost Analysis) data with various filters
 
 ## Prerequisites
 

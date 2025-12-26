@@ -2,7 +2,14 @@
 
 本文件记录 `qe-connector`（Python SDK）的用户可见变更。
 
-## Unreleased
+## 1.0.19 - 2025-12-26
+
+### 新增
+- **TCA 分析接口**：新增 `get_tca_analysis()` 方法，支持查询 TCA（Transaction Cost Analysis）分析数据
+  - 接口路径：`GET /user/trading/tca-analysis`（签名鉴权）
+  - 支持参数：`symbol`、`category`、`apikey`、`startTime`、`endTime`
+  - 返回类型：后端 `message` 原样（`list[dict]`）
+- **示例文件**：新增 `examples/user/get_tca_analysis.py`
 
 ### 变更
 - **创建母单接口**：移除 `endTime` 参数（该字段已废弃，不再使用）

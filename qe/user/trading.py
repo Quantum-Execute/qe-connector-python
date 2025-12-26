@@ -48,6 +48,25 @@ def get_order_fills(self, **kwargs):
     return self.sign_request("GET", url_path, {**kwargs})
 
 
+def get_tca_analysis(self, **kwargs):
+    """Get TCA analysis data (USER_DATA)
+
+    Query TCA analysis list (strategy-api: APIKEY signed auth).
+
+    GET /user/trading/tca-analysis
+
+    Keyword Args:
+        symbol (str, optional): Trading symbol filter
+        category (str, optional): Strategy category filter
+        apikey (str, optional): ApiKey id list, comma-separated
+        startTime (int, optional): Start time in unix milliseconds
+        endTime (int, optional): End time in unix milliseconds
+        recvWindow (int, optional): The value cannot be greater than 60000
+    """
+    url_path = "/user/trading/tca-analysis"
+    return self.sign_request("GET", url_path, {**kwargs})
+
+
 def create_master_order(self,
                         algorithm: Union[Algorithm, str],
                         exchange: Union[Exchange, str],
