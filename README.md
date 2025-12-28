@@ -702,9 +702,42 @@ print(f"总成交额: ${total_value:.2f}, 总手续费: ${total_fee:.2f}")
 | startTime | int | 否 | 开始时间戳（毫秒） |
 | endTime | int | 否 | 结束时间戳（毫秒） |
 
-**响应：**
+**响应字段：**
 
-成功时返回后端 `message` 字段原样（通常为 `list[dict]`）。
+成功时返回 `list[dict]`，每个字典包含以下字段（字段名为PascalCase，与Excel表头一致）：
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| MasterOrderID | str | MasterOrderID |
+| StartTime | str | StartTime |
+| EndTime | str | EndTime |
+| FinishedTime | str | FinishedTime |
+| Strategy | str | Strategy |
+| Symbol | str | Symbol |
+| Category | str | Category |
+| Side | str | Side |
+| Date | str | Date |
+| MasterOrderQty | float | MasterOrderQty |
+| MasterOrderNotional | float | MasterOrderNotional |
+| ArrivalPrice | float | ArrivalPrice |
+| ExcutedRate | float | ExcutedRate |
+| FillQty | float | FillQty |
+| TakeFillNotional | float | TakeFillNotional |
+| MakeFillNotional | float | MakeFillNotional |
+| FillNotional | float | FillNotional |
+| MakerRate | float | MakerRate |
+| ChildOrderCnt | int | ChildOrderCnt |
+| AverageFillPrice | float | AverageFillPrice |
+| Slippage | float | Slippage |
+| Slippage_pct | float | Slippage_pct |
+| TWAP_Slippage_pct | float | TWAP_Slippage_pct |
+| VWAP_Slippage_pct | float | VWAP_Slippage_pct |
+| Spread | float | Spread |
+| Slippage_pct_Fartouch | float | Slippage_pct_Fartouch |
+| TWAP_Slippage_pct_Fartouch | float | TWAP_Slippage_pct_Fartouch |
+| VWAP_Slippage_pct_Fartouch | float | VWAP_Slippage_pct_Fartouch |
+| IntervalReturn | float | IntervalReturn |
+| ParticipationRate | float | ParticipationRate |
 
 **示例代码：**
 
@@ -718,15 +751,25 @@ items = client.get_tca_analysis(
     endTime=1735776000000
 )
 
-print(f"items数量: {len(items)}")
+print(f"TCA分析数据数量: {len(items)}")
 if items:
     first = items[0]
-    print("示例字段:")
-    print("  master_order_id:", first.get("master_order_id"))
-    print("  side:", first.get("side"))
-    print("  symbol:", first.get("symbol"))
-    print("  twap_slippage_bps:", first.get("twap_slippage_bps"))
-    print("  make_fill_rate:", first.get("make_fill_rate"))
+    print(f"""
+TCA分析数据：
+    主订单ID: {first.get('MasterOrderID')}
+    交易对: {first.get('Symbol')}
+    方向: {first.get('Side')}
+    策略: {first.get('Strategy')}
+    开始时间: {first.get('StartTime')}
+    结束时间: {first.get('EndTime')}
+    完成时间: {first.get('FinishedTime')}
+    成交数量: {first.get('FillQty', 0):.4f}
+    平均成交价: {first.get('AverageFillPrice', 0):.2f}
+    Maker率: {first.get('MakerRate', 0)*100:.2f}%
+    TWAP滑点: {first.get('TWAP_Slippage_pct', 0)*100:.4f}%
+    VWAP滑点: {first.get('VWAP_Slippage_pct', 0)*100:.4f}%
+    参与率: {first.get('ParticipationRate', 0)*100:.4f}%
+    """)
 ```
 
 #### 取消主订单

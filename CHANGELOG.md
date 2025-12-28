@@ -2,6 +2,20 @@
 
 本文件记录 `qe-connector`（Python SDK）的用户可见变更。
 
+## 1.0.20rc1 - 2025-12-28
+
+### 变更
+- **TCA 分析接口响应格式**：`get_tca_analysis()` 返回的字典字段名更新
+  - 响应字段名从 snake_case 改为 PascalCase，与后端接口和 Excel 表头一致
+  - 字段顺序与 Excel 表头保持一致
+
+### 文档
+- **TCA 分析接口文档更新**：
+  - 更新响应字段描述表格，使用 Excel 表头字段名（PascalCase）
+  - 更新示例代码以使用新的字段名
+  - 字段描述直接使用 Excel 表头名称
+- **示例代码更新**：更新 `examples/user/get_tca_analysis.py` 以使用新的 PascalCase 字段名
+
 ## 1.0.19 - 2025-12-26
 
 ### 新增

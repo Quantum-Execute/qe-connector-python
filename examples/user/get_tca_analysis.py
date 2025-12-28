@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 api_key, api_secret, api_key_id = get_api_key()
 
 # client = Client(api_key, api_secret, base_url="http://127.0.0.1:8000/strategy-api")
-# client = Client(api_key, api_secret, base_url="https://testapiqe.ziyang-huang.com/strategy-api")
-client = Client(api_key, api_secret)
+client = Client(api_key, api_secret, base_url="https://testapiqe.ziyang-huang.com/strategy-api")
+# client = Client(api_key, api_secret)
 
 try:
     # Get all TCA analysis data
@@ -47,52 +47,52 @@ try:
         # Display key metrics from first item
         first_item = response[0]
         logger.info("Sample TCA Analysis Data:")
-        logger.info(f"  Master Order ID: {first_item.get('master_order_id', 'N/A')}")
-        logger.info(f"  Symbol: {first_item.get('symbol', 'N/A')}")
-        logger.info(f"  Category: {first_item.get('category', 'N/A')}")
-        logger.info(f"  Side: {first_item.get('side', 'N/A')}")
-        logger.info(f"  Strategy: {first_item.get('strategy', 'N/A')}")
+        logger.info(f"  Master Order ID: {first_item.get('MasterOrderID', 'N/A')}")
+        logger.info(f"  Symbol: {first_item.get('Symbol', 'N/A')}")
+        logger.info(f"  Category: {first_item.get('Category', 'N/A')}")
+        logger.info(f"  Side: {first_item.get('Side', 'N/A')}")
+        logger.info(f"  Strategy: {first_item.get('Strategy', 'N/A')}")
+        logger.info(f"  Start Time: {first_item.get('StartTime', 'N/A')}")
+        logger.info(f"  End Time: {first_item.get('EndTime', 'N/A')}")
+        logger.info(f"  Finished Time: {first_item.get('FinishedTime', 'N/A')}")
         
         # Execution metrics
-        if first_item.get('execution_rate') is not None:
-            logger.info(f"  Execution Rate: {first_item.get('execution_rate') * 100:.2f}%")
-        if first_item.get('make_fill_rate') is not None:
-            logger.info(f"  Maker Fill Rate: {first_item.get('make_fill_rate') * 100:.2f}%")
-        if first_item.get('take_fill_rate') is not None:
-            logger.info(f"  Taker Fill Rate: {first_item.get('take_fill_rate') * 100:.2f}%")
+        if first_item.get('ExcutedRate') is not None:
+            logger.info(f"  Execution Rate: {first_item.get('ExcutedRate') * 100:.2f}%")
+        if first_item.get('MakerRate') is not None:
+            logger.info(f"  Maker Rate: {first_item.get('MakerRate') * 100:.2f}%")
         
         # Slippage metrics
-        if first_item.get('twap_slippage_bps') is not None:
-            logger.info(f"  TWAP Slippage: {first_item.get('twap_slippage_bps')} bps")
-        if first_item.get('vwap_slippage_bps') is not None:
-            logger.info(f"  VWAP Slippage: {first_item.get('vwap_slippage_bps')} bps")
-        
-        # PnL metrics
-        if first_item.get('pnl_theory') is not None:
-            logger.info(f"  Theoretical PnL: {first_item.get('pnl_theory')}")
-        if first_item.get('pnl_realized') is not None:
-            logger.info(f"  Realized PnL: {first_item.get('pnl_realized')}")
-        if first_item.get('impact') is not None:
-            logger.info(f"  Impact: {first_item.get('impact')}")
+        if first_item.get('TWAP_Slippage_pct') is not None:
+            logger.info(f"  TWAP Slippage: {first_item.get('TWAP_Slippage_pct') * 100:.4f}%")
+        if first_item.get('VWAP_Slippage_pct') is not None:
+            logger.info(f"  VWAP Slippage: {first_item.get('VWAP_Slippage_pct') * 100:.4f}%")
+        if first_item.get('Slippage_pct') is not None:
+            logger.info(f"  Slippage: {first_item.get('Slippage_pct') * 100:.4f}%")
         
         # Price and quantity
-        if first_item.get('weighted_avg_price') is not None:
-            logger.info(f"  Weighted Avg Price: {first_item.get('weighted_avg_price')}")
-        if first_item.get('order_qty') is not None:
-            logger.info(f"  Order Quantity: {first_item.get('order_qty')}")
-        if first_item.get('filled_qty') is not None:
-            logger.info(f"  Filled Quantity: {first_item.get('filled_qty')}")
+        if first_item.get('AverageFillPrice') is not None:
+            logger.info(f"  Average Fill Price: {first_item.get('AverageFillPrice')}")
+        if first_item.get('MasterOrderQty') is not None:
+            logger.info(f"  Master Order Quantity: {first_item.get('MasterOrderQty')}")
+        if first_item.get('FillQty') is not None:
+            logger.info(f"  Filled Quantity: {first_item.get('FillQty')}")
         
-        # Execution duration
-        if first_item.get('execution_duration') is not None:
-            duration_minutes = first_item.get('execution_duration') / 60
-            logger.info(f"  Execution Duration: {duration_minutes:.2f} minutes")
+        # Fill notional
+        if first_item.get('FillNotional') is not None:
+            logger.info(f"  Fill Notional: {first_item.get('FillNotional')}")
+        if first_item.get('TakeFillNotional') is not None:
+            logger.info(f"  Take Fill Notional: {first_item.get('TakeFillNotional')}")
+        if first_item.get('MakeFillNotional') is not None:
+            logger.info(f"  Make Fill Notional: {first_item.get('MakeFillNotional')}")
         
-        # Timestamps
-        if first_item.get('mo_created_at'):
-            logger.info(f"  Order Created At: {first_item.get('mo_created_at')}")
-        if first_item.get('created_at'):
-            logger.info(f"  TCA Created At: {first_item.get('created_at')}")
+        # Other metrics
+        if first_item.get('ChildOrderCnt') is not None:
+            logger.info(f"  Child Order Count: {first_item.get('ChildOrderCnt')}")
+        if first_item.get('ParticipationRate') is not None:
+            logger.info(f"  Participation Rate: {first_item.get('ParticipationRate') * 100:.4f}%")
+        if first_item.get('IntervalReturn') is not None:
+            logger.info(f"  Interval Return: {first_item.get('IntervalReturn') * 100:.4f}%")
     
     # Get TCA analysis with category filter
     response = client.get_tca_analysis(
@@ -120,13 +120,13 @@ try:
         count_with_slippage = 0
         
         for item in response:
-            if item.get('notional') is not None:
-                total_notional += item.get('notional', 0)
-            if item.get('make_fill_rate') is not None:
-                total_maker_rate += item.get('make_fill_rate', 0)
+            if item.get('FillNotional') is not None:
+                total_notional += item.get('FillNotional', 0)
+            if item.get('MakerRate') is not None:
+                total_maker_rate += item.get('MakerRate', 0)
                 count_with_maker += 1
-            if item.get('twap_slippage_bps') is not None:
-                total_twap_slippage += item.get('twap_slippage_bps', 0)
+            if item.get('TWAP_Slippage_pct') is not None:
+                total_twap_slippage += item.get('TWAP_Slippage_pct', 0)
                 count_with_slippage += 1
         
         logger.info("\nAggregate Statistics:")
@@ -135,8 +135,8 @@ try:
             avg_maker_rate = (total_maker_rate / count_with_maker) * 100
             logger.info(f"  Average Maker Rate: {avg_maker_rate:.2f}%")
         if count_with_slippage > 0:
-            avg_slippage = total_twap_slippage / count_with_slippage
-            logger.info(f"  Average TWAP Slippage: {avg_slippage:.2f} bps")
+            avg_slippage = (total_twap_slippage / count_with_slippage) * 100
+            logger.info(f"  Average TWAP Slippage: {avg_slippage:.4f}%")
     
 except APIError as error:
     logger.error(
@@ -152,4 +152,8 @@ except ClientError as error:
     )
 except Exception as e:
     logger.error(f"Unexpected error: {e}", exc_info=True)
+
+
+
+
 
