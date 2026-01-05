@@ -110,6 +110,7 @@ def create_master_order(self,
         strictUpBound (bool, optional): Strict upper bound flag
         tailOrderProtection (bool, optional): Tail order protection flag (defaults to True)
         recvWindow (int, optional): The value cannot be greater than 60000
+        enableMake (bool, optional): Enable make
     """
     # 转换枚举为字符串值
     if isinstance(algorithm, Algorithm):
@@ -159,7 +160,7 @@ def create_master_order(self,
                 'executionDuration', 'limitPrice', 'mustComplete',
                 'makerRateLimit', 'povLimit', 'povMinLimit', 'marginType',
                 'reduceOnly', 'notes', 'clientId', 'worstPrice', 'limitPriceString',
-                'upTolerance', 'lowTolerance', 'strictUpBound', 'recvWindow', 'isMargin']:
+                'upTolerance', 'lowTolerance', 'strictUpBound', 'recvWindow', 'isMargin', 'enableMake']:
         if key in kwargs:
             params[key] = kwargs[key]
 
@@ -168,6 +169,12 @@ def create_master_order(self,
         params['tailOrderProtection'] = kwargs['tailOrderProtection']
     else:
         params['tailOrderProtection'] = True
+
+    # 设置 enableMake 默认值（与 Go 版本保持一致）
+    if 'enableMake' in kwargs:
+        params['enableMake'] = kwargs['enableMake']
+    else:
+        params['enableMake'] = True
 
     if 'isTargetPosition' in kwargs:
         params['isTargetPosition'] = kwargs['isTargetPosition']

@@ -383,6 +383,7 @@ apis = client.list_exchange_apis(
 | marginType | string/MarginType | 否*   | **永续合约必传参数** - 合约交易保证金类型，可选值：U（U本位），默认：U（暂时只支持U本位永续合约）。当marketType为PERP（永续合约）时必传 |
 | isMargin | bool | 否    | 是否使用现货杠杆。- 默认为false - 仅现货可使用该字段 |
 | notes | string | 否    | 订单备注 |
+| enableMake | bool | 否    | 是否允许挂单，如果关闭则全部吃单 - 默认：true |
 
 *注：totalQuantity 和 orderNotional 必须传其中一个，但当 isTargetPosition 为 true 时，totalQuantity 必填代表目标仓位数量且 orderNotional 不可填  
 *注：当使用 Deribit 账户下单 BTCUSD 或 ETHUSD 合约时，只能使用 totalQuantity 作为数量输入字段，且数量单位为 USD；orderNotional 当前不可用。  
@@ -547,6 +548,9 @@ if response.get('success'):
 | ├─ quote | string | 计价币种 |
 | ├─ completionProgress | float | 完成进度（0-100）返回50代表50%  |
 | ├─ reason | string | 原因（如取消原因） |
+| ├─ tailOrderProtection | bool    | 尾单保护开关                                                                                                                                                 |
+| ├─ enableMake          | bool    | 是否允许挂单                                                                                                                                                 |
+| ├─ makerRate           | float    | 被动成交率                                                                                                                                                  |
 | total | int | 总数 |
 | page | int | 当前页码 |
 | pageSize | int | 每页数量 |
@@ -697,7 +701,7 @@ print(f"总成交额: ${total_value:.2f}, 总手续费: ${total_fee:.2f}")
 | 参数名 | 类型 | 是否必传 | 描述 |
 |--------|------|----------|------|
 | symbol | str | 否 | 交易对筛选 |
-| category | str | 否 | 策略类别筛选 |
+| category | str | 否 | 交易品种（spot 或 perp） |
 | apikey | str | 否 | ApiKey id 列表，逗号分隔 |
 | startTime | int | 否 | 开始时间戳（毫秒） |
 | endTime | int | 否 | 结束时间戳（毫秒） |
@@ -708,36 +712,36 @@ print(f"总成交额: ${total_value:.2f}, 总手续费: ${total_fee:.2f}")
 
 | 字段名 | 类型 | 描述 |
 |--------|------|------|
-| MasterOrderID | str | MasterOrderID |
-| StartTime | str | StartTime |
-| EndTime | str | EndTime |
-| FinishedTime | str | FinishedTime |
-| Strategy | str | Strategy |
-| Symbol | str | Symbol |
-| Category | str | Category |
-| Side | str | Side |
-| Date | str | Date |
-| MasterOrderQty | float | MasterOrderQty |
-| MasterOrderNotional | float | MasterOrderNotional |
-| ArrivalPrice | float | ArrivalPrice |
-| ExcutedRate | float | ExcutedRate |
-| FillQty | float | FillQty |
-| TakeFillNotional | float | TakeFillNotional |
-| MakeFillNotional | float | MakeFillNotional |
-| FillNotional | float | FillNotional |
-| MakerRate | float | MakerRate |
-| ChildOrderCnt | int | ChildOrderCnt |
-| AverageFillPrice | float | AverageFillPrice |
-| Slippage | float | Slippage |
-| Slippage_pct | float | Slippage_pct |
-| TWAP_Slippage_pct | float | TWAP_Slippage_pct |
-| VWAP_Slippage_pct | float | VWAP_Slippage_pct |
-| Spread | float | Spread |
-| Slippage_pct_Fartouch | float | Slippage_pct_Fartouch |
-| TWAP_Slippage_pct_Fartouch | float | TWAP_Slippage_pct_Fartouch |
-| VWAP_Slippage_pct_Fartouch | float | VWAP_Slippage_pct_Fartouch |
-| IntervalReturn | float | IntervalReturn |
-| ParticipationRate | float | ParticipationRate |
+| MasterOrderID | str | 母单 |
+| StartTime | str | 母单创建时间 |
+| EndTime | str | 母单结束时间 |
+| FinishedTime | str | 实际结束时间 |
+| Strategy | str | 算法类型 |
+| Symbol | str | 交易对 |
+| Category | str | 交易类型 |
+| Side | str | 交易方向 |
+| Date | str | 母单创建日期 |
+| MasterOrderQty | float | 母单下单币数量（如0.001 BTC） |
+| MasterOrderNotional | float | 母单下单名义金额（如：10 USDT） |
+| ArrivalPrice | float | 到达价格 |
+| ExcutedRate | float | 执行率 |
+| FillQty | float | 成交数量 |
+| TakeFillNotional | float | Taker订单成交金额 |
+| MakeFillNotional | float | Maker订单成交金额 |
+| FillNotional | float | 成交金额 |
+| MakerRate | float | 挂单率 |
+| ChildOrderCnt | int | 子订单数量 |
+| AverageFillPrice | float | 成交均价 |
+| Slippage | float | 到达价滑点（绝对值） |
+| Slippage_pct | float | 到达价滑点 |
+| TWAP_Slippage_pct | float | TWAP滑点 |
+| VWAP_Slippage_pct | float | VWAP滑点 |
+| Spread | float | 相对买卖价差 |
+| Slippage_pct_Fartouch | float | 到达价滑点（相比对手价） |
+| TWAP_Slippage_pct_Fartouch | float | TWAP滑点（相比对手价） |
+| VWAP_Slippage_pct_Fartouch | float | VWAP滑点（相比对手价） |
+| IntervalReturn | float | 区间理论收益率 |
+| ParticipationRate | float | 市场参与率 |
 
 **示例代码：**
 
