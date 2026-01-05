@@ -2,6 +2,29 @@
 
 本文件记录 `qe-connector`（Python SDK）的用户可见变更。
 
+## 1.0.20 - 2026-01-06
+
+### 变更
+- **创建母单入参**：新增 `create_master_order()` 入参：`enableMake`，是否允许挂单
+- **TCA 分析接口响应格式**：`get_tca_analysis()` 返回的字典字段名更新
+  - 响应字段名从 snake_case 改为 PascalCase，与后端接口和 Excel 表头一致
+  - 字段顺序与 Excel 表头保持一致
+- **母单数据响应格式**：更新 `get_master_orders()` 返回类型
+  - 新增字段`makerRate`，被动成交率
+  - 新增字段`enableMake`，是否允许挂单
+  - 新增字段`tailOrderProtection`，尾单保护开关
+
+### 文档
+- **创建母单入参文档更新**：
+    - 新增入参字段描述
+- **TCA 分析接口文档更新**：
+  - 更新响应字段描述表格，使用 Excel 表头字段名（PascalCase）
+  - 更新示例代码以使用新的字段名
+  - 字段描述添加中文描述
+- **母单数据响应接口文档更新**：
+  - 更新响应字段描述
+- **示例代码更新**：更新 `examples/user/get_tca_analysis.py` 以使用新的 PascalCase 字段名
+ 
 ## 1.0.20rc1 - 2025-12-28
 
 ### 变更
