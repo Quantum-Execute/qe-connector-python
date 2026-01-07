@@ -5,7 +5,7 @@
 ## 1.0.21 -2026-01-07
 
 ### 文档
-- **Boost 算法支持交易对更新**：更新 `create_master_order()` 中 BoostVWAP、BoostTWAP 算法支持的交易对说明（仅限币安交易所）
+- **Boost 算法支持交易对更新**：更新 `create_master_order()` 中 BoostVWAP、BoostTWAP 算法支持的交易对说明（仅Binance交易所可用。）
   - 现货支持的交易对：BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,LTCUSDT,AVAXUSDT,XLMUSDT,XRPUSDT,DOGEUSDT,CRVUSDT
   - 永续合约支持的交易对：BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,LTCUSDT,AVAXUSDT,XLMUSDT,XRPUSDT,DOGEUSDT,ADAUSDT,BCHUSDT,FILUSDT,1000SATSUSDT,CRVUSDT
 
