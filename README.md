@@ -387,7 +387,7 @@ apis = client.list_exchange_apis(
 
 *注：totalQuantity 和 orderNotional 必须传其中一个，但当 isTargetPosition 为 true 时，totalQuantity 必填代表目标仓位数量且 orderNotional 不可填  
 *注：当使用 Deribit 账户下单 BTCUSD 或 ETHUSD 合约时，只能使用 totalQuantity 作为数量输入字段，且数量单位为 USD；orderNotional 当前不可用。  
-*注：使用BoostVWAP、BoostTWAP时，代表使用高频alpha发单。仅Binance交易所永续合约BTCUSDT、ETHUSDT交易对可用，不适用于其他交易所、交易对。
+*注：使用BoostVWAP、BoostTWAP时，代表使用高频alpha发单。仅Binance交易所可用，不适用于其他交易所。现货支持的交易对：BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,LTCUSDT,AVAXUSDT,XLMUSDT,XRPUSDT,DOGEUSDT,CRVUSDT。永续合约支持的交易对：BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,LTCUSDT,AVAXUSDT,XLMUSDT,XRPUSDT,DOGEUSDT,ADAUSDT,BCHUSDT,FILUSDT,1000SATSUSDT,CRVUSDT。
 
 **响应字段：**
 
