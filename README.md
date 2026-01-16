@@ -362,6 +362,7 @@ apis = client.list_exchange_apis(
 | **时间参数** |
 | startTime | string | 否    | 交易执行的启动时间，传入格式：ISO 8601(2025-09-03T01:30:00+08:00)，若不传入，则立即执行 |
 | executionDuration | int | 否    | 订单最大执行时长，分钟，范围>=1 |
+| executionDurationSeconds | int | 否    | 执行时长（秒），仅 TWAP-1 使用。当提供此字段且>0时，优先使用此字段。必须大于10秒 |
 | **TWAP/VWAP 算法参数** |
 | mustComplete | bool | 否    | 是否一定要在executionDuration之内执行完毕，选false则不会追赶进度，默认：true |
 | makerRateLimit | float | 否    | 要求maker占比超过该值，范围：0-1（包含0和1。输入0.1代表10%），默认：-1(算法智能计算推荐值执行) |
@@ -520,6 +521,7 @@ if response.get('success'):
 | ├─ averagePrice | float | 平均成交价 |
 | ├─ status | string | 状态：NEW（创建，未执行）、WAITING（等待中）、PROCESSING（执行中，且未完成）、PAUSED（已暂停）、CANCEL（取消中）、CANCELLED（已取消）、COMPLETED（已完成）、REJECTED（已拒绝）、EXPIRED（已过期）、CANCEL_REJECT（取消被拒绝） |
 | ├─ executionDuration | int | 执行时长（分钟） |
+| ├─ executionDurationSeconds | int | 执行时长（秒，仅 TWAP-1 使用；当提供且>0时优先使用；必须>10秒） |
 | ├─ priceLimit | float | 价格限制 |
 | ├─ startTime | string | 开始时间 |
 | ├─ endTime | string | 结束时间 |
@@ -590,6 +592,27 @@ for order in orders['items']:
     上容忍度: {order.get('upTolerance', 'N/A')}
     下容忍度: {order.get('lowTolerance', 'N/A')}
     """)
+```
+
+#### 获取母单详情
+
+获取指定母单的详细信息。
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| masterOrderId | string | 是 | 母单 ID |
+
+**响应字段：**
+
+成功时返回 `masterOrder` 字段（结构与 `MasterOrderInfo` 一致）。
+
+**示例代码：**
+
+```python
+detail = client.get_master_order_detail(masterOrderId="your-master-order-id")
+print(detail.get("masterOrder"))
 ```
 
 #### 查询成交记录

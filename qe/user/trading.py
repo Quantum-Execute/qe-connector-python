@@ -26,6 +26,23 @@ def get_master_orders(self, **kwargs):
     return self.sign_request("GET", url_path, {**kwargs})
 
 
+def get_master_order_detail(self, masterOrderId: str, **kwargs):
+    """Get master order detail (USER_DATA)
+
+    Get specified master order detail
+
+    GET /user/trading/master-orders/{masterOrderId}
+
+    Args:
+        masterOrderId (str): Master order ID
+    Keyword Args:
+        recvWindow (int, optional): The value cannot be greater than 60000
+    """
+    check_required_parameters([[masterOrderId, "masterOrderId"]])
+    url_path = f"/user/trading/master-orders/{masterOrderId}"
+    return self.sign_request("GET", url_path, {**kwargs})
+
+
 def get_order_fills(self, **kwargs):
     """Get order fills (USER_DATA)
     
@@ -94,6 +111,7 @@ def create_master_order(self,
         strategyType (StrategyType | str, optional): Strategy type (e.g., StrategyType.TWAP_1, StrategyType.TWAP_2, StrategyType.POV)
         startTime (str, optional): Start time
         executionDuration (int, optional): Execution duration
+        executionDurationSeconds (int, optional): Execution duration in seconds. Only used for TWAP-1. When provided and > 0, it takes precedence over executionDuration (minutes). Must be greater than 10 seconds.
         limitPrice (float, optional): Limit price
         mustComplete (bool, optional): Must complete flag
         makerRateLimit (float, optional): Maker rate limit
@@ -157,7 +175,7 @@ def create_master_order(self,
 
     # 添加可选参数
     for key in ['totalQuantity', 'orderNotional', 'strategyType', 'startTime',
-                'executionDuration', 'limitPrice', 'mustComplete',
+                'executionDuration', 'executionDurationSeconds', 'limitPrice', 'mustComplete',
                 'makerRateLimit', 'povLimit', 'povMinLimit', 'marginType',
                 'reduceOnly', 'notes', 'clientId', 'worstPrice', 'limitPriceString',
                 'upTolerance', 'lowTolerance', 'strictUpBound', 'recvWindow', 'isMargin', 'enableMake']:
