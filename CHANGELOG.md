@@ -8,7 +8,7 @@
 - **获取母单详情接口**：新增 `get_master_order_detail()` 方法，支持 `GET /user/trading/master-orders/{masterOrderId}`
 
 ### 变更
-- **创建母单入参**：`create_master_order()` 新增 `executionDurationSeconds`（秒级执行时长，仅 TWAP-1 使用；当提供且>0时优先使用，且必须大于10秒）
+- **创建母单入参**：`create_master_order()` 新增 `executionDurationSeconds`（秒级执行时长；当提供且>0时优先使用，且必须大于10秒）
 - **母单数据响应**：母单列表/母单详情新增 `executionDurationSeconds` 字段返回
 
 ### 文档
