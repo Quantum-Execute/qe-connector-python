@@ -2,6 +2,11 @@
 
 本文件记录 `qe-connector`（Python SDK）的用户可见变更。
 
+## 1.0.23 - 2026-01-17
+
+### 修复
+- **获取母单详情接口**：修复 `get_master_order_detail()` 方法导出，支持 `GET /user/trading/master-orders/{masterOrderId}`
+
 ## 1.0.22 - 2026-01-17
 
 ### 新增

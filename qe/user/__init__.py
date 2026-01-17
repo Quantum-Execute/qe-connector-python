@@ -10,6 +10,7 @@ class User(API):
     # CONVERT
     from qe.user.exchange import list_exchange_apis
     from qe.user.trading import get_master_orders
+    from qe.user.trading import get_master_order_detail
     from qe.user.trading import get_order_fills
     from qe.user.trading import get_tca_analysis
     from qe.user.trading import create_master_order
