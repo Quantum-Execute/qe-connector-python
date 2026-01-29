@@ -2,6 +2,18 @@
 
 本文件记录 `qe-connector`（Python SDK）的用户可见变更。
 
+## 1.0.24 - 2026-01-29
+
+### 新增
+- **通过client_order_id获取母单详情接口**：新增 `get_master_order_detail_by_client_order_id()` 方法，支持 `GET /user/trading/master-orders/by-client-order-id/{clientOrderId}`
+- **创建母单入参**：`create_master_order()` 新增 `clientOrderId` 参数，支持用户自定义订单ID
+
+### 变更
+- **母单数据响应**：母单列表/母单详情新增 `clientOrderId` 字段返回
+
+### 文档
+- README：补充"通过client_order_id获取母单详情"用法，并在"创建主订单"参数中增加 `clientOrderId` 说明
+
 ## 1.0.23 - 2026-01-17
 
 ### 修复

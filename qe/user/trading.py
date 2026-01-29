@@ -43,6 +43,23 @@ def get_master_order_detail(self, masterOrderId: str, **kwargs):
     return self.sign_request("GET", url_path, {**kwargs})
 
 
+def get_master_order_detail_by_client_order_id(self, clientOrderId: str, **kwargs):
+    """Get master order detail by client order id (USER_DATA)
+
+    Get specified master order detail by client order id
+
+    GET /user/trading/master-orders/by-client-order-id/{clientOrderId}
+
+    Args:
+        clientOrderId (str): Client order ID
+    Keyword Args:
+        recvWindow (int, optional): The value cannot be greater than 60000
+    """
+    check_required_parameters([[clientOrderId, "clientOrderId"]])
+    url_path = f"/user/trading/master-orders/by-client-order-id/{clientOrderId}"
+    return self.sign_request("GET", url_path, {**kwargs})
+
+
 def get_order_fills(self, **kwargs):
     """Get order fills (USER_DATA)
     
@@ -121,6 +138,7 @@ def create_master_order(self,
         reduceOnly (bool, optional): Reduce only flag
         notes (str, optional): Order notes
         clientId (str, optional): Client order ID
+        clientOrderId (str, optional): Client order ID (user-specified order ID for querying)
         worstPrice (float, optional): Worst acceptable price
         limitPriceString (str, optional): Limit price as string
         upTolerance (str, optional): Up tolerance
@@ -177,7 +195,7 @@ def create_master_order(self,
     for key in ['totalQuantity', 'orderNotional', 'strategyType', 'startTime',
                 'executionDuration', 'executionDurationSeconds', 'limitPrice', 'mustComplete',
                 'makerRateLimit', 'povLimit', 'povMinLimit', 'marginType',
-                'reduceOnly', 'notes', 'clientId', 'worstPrice', 'limitPriceString',
+                'reduceOnly', 'notes', 'clientId', 'clientOrderId', 'worstPrice', 'limitPriceString',
                 'upTolerance', 'lowTolerance', 'strictUpBound', 'recvWindow', 'isMargin', 'enableMake']:
         if key in kwargs:
             params[key] = kwargs[key]
