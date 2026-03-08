@@ -181,6 +181,23 @@ def create_master_order(self,
         if 'totalQuantity' not in kwargs or kwargs.get('totalQuantity') is None:
             raise ValueError('totalQuantity is required when exchange is Deribit and symbol is BTCUSD or ETHUSD (unit: USD)')
 
+    # Binance coin-margined perp special rules:
+    # - When trading Binance PERP with marginType=C, only totalQuantity is allowed.
+    # - totalQuantity unit is contracts and must be an integer.
+    if (
+        isinstance(exchange, str) and exchange == "Binance" and
+        isinstance(marketType, str) and marketType == "PERP" and
+        kwargs.get('marginType') == "C"
+    ):
+        if 'orderNotional' in kwargs and kwargs['orderNotional'] is not None:
+            raise ValueError('orderNotional is not allowed when exchange is Binance and marginType is C for PERP orders; use totalQuantity (unit: contracts) instead')
+        if 'totalQuantity' not in kwargs or kwargs.get('totalQuantity') is None:
+            raise ValueError('totalQuantity is required when exchange is Binance and marginType is C for PERP orders (unit: contracts)')
+
+        total_quantity = kwargs.get('totalQuantity')
+        if int(total_quantity) != total_quantity:
+            raise ValueError('totalQuantity must be an integer when exchange is Binance and marginType is C for PERP orders (unit: contracts)')
+
     params = {
         "algorithm": algorithm,
         "algorithmType": "TWAP",  # 固定值，与 Go 版本保持一致

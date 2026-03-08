@@ -2,6 +2,23 @@
 
 本文件记录 `qe-connector`（Python SDK）的用户可见变更。
 
+## 1.0.25 - 2026-03-08
+
+### 新增
+- **币对品种枚举**：`Category` 新增 `PERP_CM = "perp_cm"`，用于表示 Binance 币本位合约
+
+### 变更
+- **创建母单接口**：新增 Binance 币本位合约限制校验
+  - 当 `exchange=Binance`、`marketType=PERP` 且 `marginType=C` 时，仅允许使用 `totalQuantity`
+  - `orderNotional` 在上述场景下不可用
+  - `totalQuantity` 单位为张，且输入值必须为整数
+
+### 文档
+- README：补充 `marginType` 对 `C`（币本位）的支持说明
+- README：补充 `isCoin=true` 时返回币本位合约可用交易对，仅 Binance 可用
+- README：更新母单响应与筛选参数中的 `category` 说明，支持 `perp_cm`
+- README：补充 Binance `perp_cm` 场景下 `totalQuantity` / `orderNotional` 的使用限制
+
 ## 1.0.24 - 2026-01-29
 
 ### 新增
