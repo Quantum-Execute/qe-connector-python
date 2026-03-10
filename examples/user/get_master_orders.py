@@ -15,23 +15,19 @@ logger = logging.getLogger(__name__)
 api_key, api_secret,api_key_id = get_api_key()
 
 # client = Client(api_key, api_secret, base_url="http://127.0.0.1:8000/strategy-api")
-# client = Client(api_key, api_secret, base_url="https://testapiqe.ziyang-huang.com/strategy-api")
-client = Client(api_key, api_secret)
+client = Client(api_key, api_secret, base_url="https://testapiqe.ziyang-huang.com/strategy-api")
+# client = Client(api_key, api_secret)
 
 try:
-    # Get all master orders
-    response = client.get_master_orders()
-    logger.info(f"Total master orders: {response.get('total', 0)}")
-    
+    # # Get all master orders
+    # response = client.get_master_orders()
+    # logger.info(f"Total master orders: {response.get('total', 0)}")
+    #
     # Get with pagination and filters
     response = client.get_master_orders(
         page=1,
         pageSize=20,
-        status=MasterOrderStatus.NEW,  # NEW COMPLETED
-        exchange="binance",
-        symbol="BTCUSDT",
-        startTime="2024-01-01T00:00:00Z",
-        endTime="2024-12-31T23:59:59Z"
+        status=MasterOrderStatus.NEW,  # 或 MasterOrderStatus.COMPLETED
     )
     
     for order in response.get('items', []):
