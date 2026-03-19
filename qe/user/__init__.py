@@ -17,3 +17,24 @@ class User(API):
     from qe.user.trading import create_master_order
     from qe.user.trading import cancel_master_order
     from qe.user.trading import create_listen_key
+
+    # Exchange balance / position / account queries
+    from qe.user.exchange_balance import get_account_balance
+    from qe.user.exchange_balance import get_margin_balance
+    from qe.user.exchange_balance import get_pv1_balance
+    from qe.user.exchange_balance import get_okx_account_balance
+    from qe.user.exchange_balance import get_fapi_position_side_dial
+    from qe.user.exchange_balance import get_papi_um_position_side_dual
+    from qe.user.exchange_balance import get_okx_account_positions
+    from qe.user.exchange_balance import get_okx_account_max_size
+    from qe.user.exchange_balance import get_ltp_position
+    from qe.user.exchange_balance import get_deribit_position
+    from qe.user.exchange_balance import get_um_account
+    from qe.user.exchange_balance import get_cm_account
+    from qe.user.exchange_balance import get_pv1_account
+    from qe.user.exchange_balance import get_dapi_account
+    from qe.user.exchange_balance import get_fapi_account
+    from qe.user.exchange_balance import get_cross_margin_account_detail
+    from qe.user.exchange_balance import get_ltp_account
+    from qe.user.exchange_balance import get_ltp_portfolio_asset
+    from qe.user.exchange_balance import get_deribit_account
