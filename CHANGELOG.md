@@ -2,39 +2,6 @@
 
 本文件记录 `qe-connector`（Python SDK）的用户可见变更。
 
-## 1.0.26 - 2026-03-19
-
-### 新增
-- **交易所余额/持仓/账户查询接口**：新增 19 个 `GET /user/exchange-apis/` 子方法，覆盖 Binance、OKX、LTP、Deribit 四大交易所
-
-  **余额类（4个）：**
-  - `get_account_balance(binding_id)` — Binance 现货账户余额（`/account-balance`）
-  - `get_margin_balance(binding_id)` — Binance 合约账户余额（`/margin-balance`）
-  - `get_pv1_balance(binding_id)` — Binance PAPI PV1 余额（`/pv1-balance`）
-  - `get_okx_account_balance(binding_id)` — OKX 账户余额（`/okx-account-balance`）
-
-  **持仓类（6个）：**
-  - `get_fapi_position_side_dial(binding_id)` — Binance FAPI 持仓方向双开状态（`/fapi-position-side-dial`）
-  - `get_papi_um_position_side_dual(binding_id)` — Binance PAPI UM 持仓方向双开状态（`/papi-um-position-side-dual`）
-  - `get_okx_account_positions(binding_id)` — OKX 持仓信息（`/okx-account-positions`）
-  - `get_okx_account_max_size(binding_id, inst_id, td_mode)` — OKX 最大可开仓数量（`/okx-account-max-size`）
-  - `get_ltp_position(binding_id, sym=None)` — LTP 持仓信息（`/ltp-position`），`sym` 可选
-  - `get_deribit_position(binding_id)` — Deribit 持仓信息（`/deribit-position`）
-
-  **账户类（9个）：**
-  - `get_um_account(binding_id)` — Binance PAPI UM 账户（`/um-account`）
-  - `get_cm_account(binding_id)` — Binance PAPI CM 账户（`/cm-account`）
-  - `get_pv1_account(binding_id)` — Binance PAPI PV1 账户（`/pv1-account`）
-  - `get_dapi_account(binding_id)` — Binance DAPI 账户（`/dapi-account`）
-  - `get_fapi_account(binding_id)` — Binance FAPI 账户（`/fapi-account`）
-  - `get_cross_margin_account_detail(binding_id)` — Binance 全仓杠杆账户详情（`/cross-margin-account-detail`）
-  - `get_ltp_account(binding_id)` — LTP 账户信息（`/ltp-account`）
-  - `get_ltp_portfolio_asset(binding_id)` — LTP 投资组合资产（`/ltp-portfolio-asset`）
-  - `get_deribit_account(binding_id)` — Deribit 账户信息（`/deribit-account`）
-
-### 文档
-- README：新增"交易所余额/持仓/账户查询"章节，含全部 19 个接口的参数说明、响应字段与示例代码
-
 ## 1.0.25 - 2026-03-08
 
 ### 新增
