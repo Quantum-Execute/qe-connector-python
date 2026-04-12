@@ -41,3 +41,5 @@ class User(API):
     from qe.user.exchange_balance import get_ltp_account
     from qe.user.exchange_balance import get_ltp_portfolio_asset
     from qe.user.exchange_balance import get_deribit_account
+    from qe.user.exchange_balance import get_hyperliquid_spot_balance
+    from qe.user.exchange_balance import get_hyperliquid_positions

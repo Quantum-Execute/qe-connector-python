@@ -353,3 +353,43 @@ def get_deribit_account(self, binding_id, **kwargs):
         "/user/exchange-apis/deribit-account",
         {"bindingId": binding_id, **kwargs},
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Hyperliquid
+# ─────────────────────────────────────────────────────────────────────────────
+
+def get_hyperliquid_spot_balance(self, binding_id, **kwargs):
+    """Get Hyperliquid spot account balance (USER_DATA)
+
+    GET /user/exchange-apis/hyperliquid-spot-balance
+
+    Args:
+        binding_id (str): Exchange API Key binding UUID
+
+    Keyword Args:
+        recvWindow (int, optional): The value cannot be greater than 60000
+    """
+    return self.sign_request(
+        "GET",
+        "/user/exchange-apis/hyperliquid-spot-balance",
+        {"bindingId": binding_id, **kwargs},
+    )
+
+
+def get_hyperliquid_positions(self, binding_id, **kwargs):
+    """Get Hyperliquid perpetual positions (USER_DATA)
+
+    GET /user/exchange-apis/hyperliquid-positions
+
+    Args:
+        binding_id (str): Exchange API Key binding UUID
+
+    Keyword Args:
+        recvWindow (int, optional): The value cannot be greater than 60000
+    """
+    return self.sign_request(
+        "GET",
+        "/user/exchange-apis/hyperliquid-positions",
+        {"bindingId": binding_id, **kwargs},
+    )
