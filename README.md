@@ -655,6 +655,7 @@ print(detail.get("masterOrder"))
 | pageSize | int | 否 | 每页数量 |
 | masterOrderId | string | 否 | 主订单 ID 筛选 |
 | subOrderId | string | 否 | 子订单 ID 筛选 |
+| orderId | string | 否 | 子订单 ID 筛选（交易所订单ID），与 subOrderId 等价 |
 | symbol | string | 否 | 交易对筛选 |
 | status | string | 否 | 订单状态筛选，多个状态用逗号分隔，如：PLACED,FILLED。支持的状态：PLACED（已下单）、REJECTED（已拒单）、CANCELLED（算法已撤单）、FILLED（完全成交）、Cancelack（交易已撤单）、CANCEL_REJECTED（拒绝撤单） |
 | startTime | string | 否 | 开始时间筛选 |
@@ -960,8 +961,8 @@ else:
 | 参数名 | 类型 | 是否必传 | 描述 |
 |--------|------|----------|------|
 | masterOrderId | string | 是 | 要修改的母单 ID |
-| orderNotional | float | 否 | 订单金额（USDT） |
-| totalQuantity | float | 否 | 要交易的总数量 |
+| orderNotional | float | 否 | 订单金额（USDT）。与 totalQuantity 二选一，且只能修改下单时使用的字段（若下单时使用 orderNotional 则只能改此字段） |
+| totalQuantity | float | 否 | 要交易的总数量。与 orderNotional 二选一，且只能修改下单时使用的字段（若下单时使用 totalQuantity 则只能改此字段） |
 | upTolerance | str | 否 | 上容忍度 |
 | lowTolerance | str | 否 | 下容忍度 |
 | enableMake | bool | 否 | 是否启用 Maker 订单 |

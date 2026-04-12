@@ -72,6 +72,7 @@ def get_order_fills(self, **kwargs):
         pageSize (int, optional): Page size
         masterOrderId (str, optional): Master order ID filter
         subOrderId (str, optional): Sub order ID filter
+        orderId (str, optional): Order ID filter (exchange order ID)
         symbol (str, optional): Trading symbol filter
         status (str, optional): Order status filter, multiple statuses separated by comma, e.g. PLACED,FILLED. Supported statuses: PLACED, REJECTED, CANCELLED, FILLED, Cancelack, CANCEL_REJECTED
         startTime (str, optional): Start time filter
