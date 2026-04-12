@@ -2,6 +2,22 @@
 
 本文件记录 `qe-connector`（Python SDK）的用户可见变更。
 
+## 1.0.26 - 2026-04-12
+
+### 新增
+- **Hyperliquid 支持**：`Exchange` 枚举新增 `HYPERLIQUID = "Hyperliquid"`
+- **暂停母单接口**：新增 `pause_master_order()` 方法，支持 `PUT /user/trading/master-orders/{masterOrderId}/pause`
+  - 参数：`masterOrderId`（必填）、`reason`（可选）
+- **恢复母单接口**：新增 `resume_master_order()` 方法，支持 `PUT /user/trading/master-orders/{masterOrderId}/resume`
+  - 参数：`masterOrderId`（必填）
+- **修改母单参数接口**：新增 `update_master_order_params()` 方法，支持 `PUT /user/trading/master-orders/{masterOrderId}/update`
+  - 必填参数：`masterOrderId`
+  - 可选参数：`orderNotional`、`totalQuantity`、`upTolerance`、`lowTolerance`、`enableMake`、`makerRateLimit`、`strictUpBound`、`povLimit`、`povMinLimit`、`limitPrice`、`worstPrice`、`tailOrderProtection`、`mustComplete`、`executionDurationSeconds`
+
+### 变更
+- **成交记录响应**：`get_order_fills()` 返回字段文档补充 `orderId`（子订单ID）、`quantity`（下单数量）、`createdAt`（数据创建时间）、`updatedAt`（最后修改时间）
+- **`limitPrice` 参数标记为 Deprecated**：建议使用 `worstPrice` 替代，`limitPrice` 保留以兼容旧版本
+
 ## 1.0.25 - 2026-03-08
 
 ### 新增

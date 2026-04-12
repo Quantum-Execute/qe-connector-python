@@ -49,6 +49,7 @@ class Exchange(str, Enum):
     OKX = "OKX"  # OKX
     LTP = "LTP"  # LTP
     DERIBIT = "Deribit"  # Deribit
+    HYPERLIQUID = "Hyperliquid"  # Hyperliquid
 
 
 class Category(str, Enum):

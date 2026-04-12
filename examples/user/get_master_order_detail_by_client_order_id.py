@@ -20,7 +20,7 @@ client = Client(api_key, api_secret)
 try:
     # Example 1: Get master order detail by client_order_id
     # This assumes you have created an order with a clientOrderId
-    client_order_id = "my-custom-order-id-001"
+    client_order_id = "PY-1775034643833"
     
     logger.info(f"Fetching master order detail by client_order_id: {client_order_id}")
     response = client.get_master_order_detail_by_client_order_id(

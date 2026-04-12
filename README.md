@@ -70,7 +70,7 @@ from qe.lib import Algorithm, Exchange, MarketType, OrderSide, StrategyType, Mar
 
 # 可用的枚举值
 print("算法类型:", [algo.value for algo in Algorithm])           # ['TWAP', 'VWAP', 'POV']
-print("交易所:", [exchange.value for exchange in Exchange])     # ['Binance', 'OKX', 'LTP', 'Deribit']
+print("交易所:", [exchange.value for exchange in Exchange])     # ['Binance', 'OKX', 'LTP', 'Deribit', 'Hyperliquid']
 print("市场类型:", [market.value for market in MarketType])     # ['SPOT', 'PERP']
 print("订单方向:", [side.value for side in OrderSide])         # ['buy', 'sell']
 print("策略类型:", [strategy.value for strategy in StrategyType]) # ['TWAP_1', 'POV']
@@ -81,7 +81,7 @@ print("母单状态:", [status.value for status in MasterOrderStatus])  # ['NEW'
 # 使用枚举创建订单（推荐）
 response = client.create_master_order(
     algorithm=Algorithm.TWAP,        # 而不是 "TWAP"
-    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP、Exchange.DERIBIT       # 而不是 "Binance"（支持 Binance、OKX、LTP、Deribit）
+    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP、Exchange.DERIBIT、Exchange.HYPERLIQUID       # 而不是 "Binance"（支持 Binance、OKX、LTP、Deribit、Hyperliquid）
     marketType=MarketType.SPOT,      # 而不是 "SPOT"
     side=OrderSide.BUY,             # 而不是 "buy"
     # ... 其他参数
@@ -175,7 +175,7 @@ except Exception as e:
 |--------|------|----------|------|
 | page | int | 否 | 页码 |
 | pageSize | int | 否 | 每页数量 |
-| exchange | str | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit |
+| exchange | str | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid |
 | marketType | str/TradingPairMarketType | 否 | 市场类型筛选，可选值：SPOT（现货）、FUTURES（合约） |
 | isCoin | bool | 否 | 是否查询币本位合约可用交易对。传 `true` 时返回币本位合约可用交易对，仅 Binance 可用 |
 
@@ -288,7 +288,7 @@ except Exception as e:
 |--------|------|----------|------|
 | page | int | 否 | 页码 |
 | pageSize | int | 否 | 每页数量 |
-| exchange | str | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit |
+| exchange | str | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid |
 
 **响应字段：**
 
@@ -298,7 +298,7 @@ except Exception as e:
 | ├─ id | string | API 记录的唯一标识 |
 | ├─ createdAt | string | API 添加时间 |
 | ├─ accountName | string | 账户名称（如：账户1、账户2） |
-| ├─ exchange | string | 交易所名称（如：Binance、OKX、LTP、Deribit） |
+| ├─ exchange | string | 交易所名称（如：Binance、OKX、LTP、Deribit、Hyperliquid） |
 | ├─ apiKey | string | 交易所 API Key（部分隐藏） |
 | ├─ verificationMethod | string | API 验证方式（如：OAuth、API） |
 | ├─ status | string | API 状态：正常、异常（不可用） |
@@ -351,7 +351,7 @@ apis = client.list_exchange_apis(
 | **基础参数** |
 | strategyType | string/StrategyType | 是    | 策略类型，可选值：TWAP-1、POV |
 | algorithm | string/Algorithm | 是    | 交易算法。strategyType=TWAP-1时，可选值：TWAP、VWAP、BoostVWAP、BoostTWAP；strategyType=POV时，可选值：POV |
-| exchange | string/Exchange | 是    | 交易所名称，可选值：Binance、OKX、LTP、Deribit |
+| exchange | string/Exchange | 是    | 交易所名称，可选值：Binance、OKX、LTP、Deribit、Hyperliquid |
 | symbol | string | 是    | 交易对符号（如：BTCUSDT）（可用交易对查询） |
 | marketType | string/MarketType | 是    | 可选值：SPOT（现货）、PERP（永续合约） |
 | side | string/OrderSide | 是    | 1.如果isTargetPosition=False：side代表交易方向，可选值：buy（买入）、sell（卖出）；合约交易时可与reduceOnly组合，reduceOnly=True时：buy代表买入平空，sell代表卖出平多。2.如果isTargetPosition=True：side代表仓位方向，可选值：buy（多头）、sell（空头）。【仅合约交易时需传入】 |
@@ -369,7 +369,7 @@ apis = client.list_exchange_apis(
 | mustComplete | bool | 否    | 是否一定要在executionDuration之内执行完毕，选false则不会追赶进度，默认：true |
 | makerRateLimit | float | 否    | 要求maker占比超过该值，范围：0-1（包含0和1。输入0.1代表10%），默认：-1(算法智能计算推荐值执行) |
 | povLimit | string | 否    | 占市场成交量比例上限，优先级低于mustComplete，范围：0-1（包含0和1。输入0.1代表10%），默认：0.8 |
-| limitPrice | float | 否    | 最高/低允许交易的价格，买入时该字段象征最高买入价，卖出时该字段象征最低卖出价，若市价超出范围则停止交易，范围：>0，默认：-1，代表无限制 |
+| worstPrice | float | 否    | 最高/低允许交易的价格，买入时该字段象征最高买入价，卖出时该字段象征最低卖出价，若市价超出范围则停止交易，范围：>0，默认：-1，代表无限制 |
 | upTolerance | string | 否    | 允许超出目标进度的最大容忍度，范围：0-1（不包含0和1，最小输入0.0001，最大输入0.9999。输入0.1代表可以超前目标进度10%），默认：-1（即无容忍） |
 | lowTolerance | string | 否    | 允许落后目标进度的最大容忍度，范围：0-1（不包含0和1，最小输入0.0001，最大输入0.9999。输入0.1代表可落后目标进度10%），默认：-1（即无容忍） |
 | strictUpBound | bool | 否    | 是否严格小于uptolerance，开启后会更加严格贴近交易进度执行，同时可能会把母单拆很细；如需严格控制交易进度则建议开启，其他场景建议不开启，默认：false |
@@ -378,7 +378,7 @@ apis = client.list_exchange_apis(
 | makerRateLimit | float | 否    | 要求maker占比超过该值（包含0和1，输入0.1代表10%），输入范围：0-1（输入0.1代表10%），默认：-1(算法智能计算推荐值执行) |
 | povLimit | string | 否    | 占市场成交量比例上限（包含0和0.5，一般建议小于0.15），输入范围：0-0.5（povMinLimit < max(povLimit-0.01,0)），默认：0 |
 | povMinLimit | float | 否    | 占市场成交量比例下限，范围：小于max(POVLimit-0.01,0)，默认：0（即无下限） |
-| limitPrice | float | 否    | 最高/低允许交易的价格，买入时该字段象征最高买入价，卖出时该字段象征最低卖出价，若市价超出范围则停止交易，范围：>0，默认：-1，代表无限制 |
+| worstPrice | float | 否    | 最高/低允许交易的价格，买入时该字段象征最高买入价，卖出时该字段象征最低卖出价，若市价超出范围则停止交易，范围：>0，默认：-1，代表无限制 |
 | strictUpBound | bool | 否    | 是否追求严格小于povLimit，开启后可能会把很小的母单也拆的很细，比如50u拆成10个5u，不建议开启，算法的每个order会权衡盘口流动性，默认：false |
 | tailOrderProtection | bool | 否    | 订单余量小于交易所最小发单量时，是否必须taker扫完，如果false，则订单余量小于交易所最小发单量时，订单结束执行；如果true，则订单余量随最近一笔下单全额执行（可能会提高Taker率），默认：true |
 | **其他参数** |
@@ -503,7 +503,7 @@ if response.get('success'):
 | page | int | 否 | 页码 |           
 | pageSize | int | 否 | 每页数量 |
 | status | string | 否 | 订单状态筛选，可选值：NEW（执行中）、COMPLETED（已完成） |
-| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit |
+| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid |
 | symbol | string | 否 | 交易对筛选 |
 | startTime | string | 否 | 开始时间筛选 |
 | endTime | string | 否 | 结束时间筛选 |
@@ -683,6 +683,10 @@ print(detail.get("masterOrder"))
 | ├─ base | string | 基础币种 |
 | ├─ quote | string | 计价币种 |
 | ├─ type | string | 订单类型 |
+| ├─ orderId | string | 子订单ID（交易所订单ID） |
+| ├─ quantity | float | 下单数量 |
+| ├─ createdAt | string | 数据创建时间 |
+| ├─ updatedAt | string | 最后修改时间 |
 | total | int | 总数 |
 | page | int | 当前页码 |
 | pageSize | int | 每页数量 |
@@ -883,6 +887,115 @@ def cancel_all_active_orders(client):
     
     print(f"\n总计取消 {cancelled_count} 个订单")
     return cancelled_count
+```
+
+#### 暂停母单
+
+暂停指定的正在执行的母单。
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| masterOrderId | string | 是 | 要暂停的母单 ID |
+| reason | string | 否 | 暂停原因 |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| success | bool | 暂停是否成功 |
+| message | string | 暂停结果消息 |
+
+**示例代码：**
+
+```python
+response = client.pause_master_order(
+    masterOrderId="your-master-order-id",
+    reason="市场波动"
+)
+
+if response.get('success'):
+    print("母单暂停成功")
+else:
+    print(f"母单暂停失败: {response.get('message')}")
+```
+
+#### 恢复母单
+
+恢复指定的已暂停母单。
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| masterOrderId | string | 是 | 要恢复的母单 ID |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| success | bool | 恢复是否成功 |
+| message | string | 恢复结果消息 |
+
+**示例代码：**
+
+```python
+response = client.resume_master_order(
+    masterOrderId="your-master-order-id"
+)
+
+if response.get('success'):
+    print("母单恢复成功")
+else:
+    print(f"母单恢复失败: {response.get('message')}")
+```
+
+#### 修改母单参数
+
+在线修改运行中母单的参数。母单ID必填，其余字段传哪个修改哪个。
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必传 | 描述 |
+|--------|------|----------|------|
+| masterOrderId | string | 是 | 要修改的母单 ID |
+| orderNotional | float | 否 | 订单金额（USDT） |
+| totalQuantity | float | 否 | 要交易的总数量 |
+| upTolerance | str | 否 | 上容忍度 |
+| lowTolerance | str | 否 | 下容忍度 |
+| enableMake | bool | 否 | 是否启用 Maker 订单 |
+| makerRateLimit | float | 否 | 最低 Maker 率（0-1） |
+| strictUpBound | bool | 否 | 严格上界 |
+| povLimit | float | 否 | 最大市场成交量占比（0-1） |
+| povMinLimit | float | 否 | 占市场成交量比例下限 |
+| worstPrice | float | 否 | 最高/低允许交易的价格，-1表示不限制 |
+| tailOrderProtection | bool | 否 | 尾单保护 |
+| mustComplete | bool | 否 | 是否必须完成 |
+| executionDurationSeconds | int | 否 | 执行时长（秒），必须大于10秒 |
+
+**响应字段：**
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| success | bool | 修改是否成功 |
+| message | string | 修改结果消息 |
+
+**示例代码：**
+
+```python
+response = client.update_master_order_params(
+    masterOrderId="your-master-order-id",
+    worstPrice=50000,
+    totalQuantity=1.5,
+    mustComplete=True,
+    executionDurationSeconds=600
+)
+
+if response.get('success'):
+    print("母单参数修改成功")
+else:
+    print(f"母单参数修改失败: {response.get('message')}")
 ```
 
 #### 创建 ListenKey
@@ -1489,6 +1602,7 @@ except KeyboardInterrupt:
 | OKX | OKX |
 | LTP | LTP |
 | Deribit | Deribit |
+| Hyperliquid | Hyperliquid |
 
 **保证金类型 (MarginType)：**
 

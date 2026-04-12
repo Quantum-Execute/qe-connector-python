@@ -77,6 +77,35 @@ def get_order_fills(self, **kwargs):
         startTime (str, optional): Start time filter
         endTime (str, optional): End time filter
         recvWindow (int, optional): The value cannot be greater than 60000
+
+    Returns:
+        dict: Response containing:
+            - items (list): List of order fill records, each containing:
+                - id (str): Record ID
+                - orderCreatedTime (str): Order creation time
+                - masterOrderId (str): Master order ID
+                - exchange (str): Exchange name
+                - category (str): Market type (spot/perp/perp_cm)
+                - symbol (str): Trading pair
+                - side (str): Order side
+                - filledValue (float): Filled value
+                - filledQuantity (float): Filled quantity
+                - avgPrice (float): Average price
+                - price (float): Trade price
+                - fee (float): Trading fee
+                - tradingAccount (str): Trading account
+                - status (str): Order status
+                - rejectReason (str): Reject reason
+                - base (str): Base currency
+                - quote (str): Quote currency
+                - type (str): Order type
+                - orderId (str): Sub-order ID (exchange order ID)
+                - quantity (float): Order quantity
+                - createdAt (str): Record creation time
+                - updatedAt (str): Record last update time
+            - total (int): Total count
+            - page (int): Current page
+            - pageSize (int): Page size
     """
     url_path = "/user/trading/order-fills"
     return self.sign_request("GET", url_path, {**kwargs})
@@ -129,7 +158,7 @@ def create_master_order(self,
         startTime (str, optional): Start time
         executionDuration (int, optional): Execution duration
         executionDurationSeconds (int, optional): Execution duration in seconds. Only used for TWAP-1. When provided and > 0, it takes precedence over executionDuration (minutes). Must be greater than 10 seconds.
-        limitPrice (float, optional): Limit price
+        limitPrice (float, optional): Deprecated, use worstPrice instead. Limit price
         mustComplete (bool, optional): Must complete flag
         makerRateLimit (float, optional): Maker rate limit
         povLimit (float, optional): POV limit
@@ -139,7 +168,9 @@ def create_master_order(self,
         notes (str, optional): Order notes
         clientId (str, optional): Client order ID
         clientOrderId (str, optional): Client order ID (user-specified order ID for querying)
-        worstPrice (float, optional): Worst acceptable price
+        worstPrice (float, optional): Worst acceptable price (recommended). The worst allowed
+            trading price. For buy orders this is the maximum buy price; for sell orders this is the
+            minimum sell price. Use -1 for no limit.
         limitPriceString (str, optional): Limit price as string
         upTolerance (str, optional): Up tolerance
         lowTolerance (str, optional): Low tolerance
@@ -239,6 +270,86 @@ def create_master_order(self,
 
     url_path = "/user/trading/master-orders"
     return self.sign_request("POST", url_path, params)
+
+
+def pause_master_order(self, masterOrderId: str, **kwargs):
+    """Pause a running master order (USER_DATA)
+    
+    Pause a specified running master order
+    
+    PUT /user/trading/master-orders/{masterOrderId}/pause
+    
+    Args:
+        masterOrderId (str): Master order ID to pause
+    Keyword Args:
+        reason (str, optional): Pause reason
+        recvWindow (int, optional): The value cannot be greater than 60000
+    """
+    check_required_parameters([[masterOrderId, "masterOrderId"]])
+
+    params = {"masterOrderId": masterOrderId, **kwargs}
+    url_path = f"/user/trading/master-orders/{masterOrderId}/pause"
+    return self.sign_request("PUT", url_path, params)
+
+
+def resume_master_order(self, masterOrderId: str, **kwargs):
+    """Resume a paused master order (USER_DATA)
+    
+    Resume a specified paused master order
+    
+    PUT /user/trading/master-orders/{masterOrderId}/resume
+    
+    Args:
+        masterOrderId (str): Master order ID to resume
+    Keyword Args:
+        recvWindow (int, optional): The value cannot be greater than 60000
+    """
+    check_required_parameters([[masterOrderId, "masterOrderId"]])
+
+    params = {"masterOrderId": masterOrderId, **kwargs}
+    url_path = f"/user/trading/master-orders/{masterOrderId}/resume"
+    return self.sign_request("PUT", url_path, params)
+
+
+def update_master_order_params(self, masterOrderId: str, **kwargs):
+    """Update parameters of a running master order (USER_DATA)
+    
+    Modify parameters of a running master order. Only provided fields will be updated.
+    
+    PUT /user/trading/master-orders/{masterOrderId}/update
+    
+    Args:
+        masterOrderId (str): Master order ID to update (required)
+    Keyword Args:
+        orderNotional (float, optional): Order notional value (USDT)
+        totalQuantity (float, optional): Total quantity to trade
+        upTolerance (str, optional): Up tolerance
+        lowTolerance (str, optional): Low tolerance
+        enableMake (bool, optional): Whether to enable maker orders
+        makerRateLimit (float, optional): Minimum maker rate (0-1)
+        strictUpBound (bool, optional): Strict upper bound
+        povLimit (float, optional): Maximum market volume percentage (0-1)
+        povMinLimit (float, optional): Minimum market volume percentage
+        limitPrice (float, optional): Deprecated, use worstPrice instead. Limit price, -1 for no limit
+        worstPrice (float, optional): Worst acceptable price, -1 for no limit
+        tailOrderProtection (bool, optional): Tail order protection
+        mustComplete (bool, optional): Whether must complete within duration
+        executionDurationSeconds (int, optional): Execution duration in seconds, must be > 10
+        recvWindow (int, optional): The value cannot be greater than 60000
+    """
+    check_required_parameters([[masterOrderId, "masterOrderId"]])
+
+    params = {"masterOrderId": masterOrderId}
+
+    for key in ['orderNotional', 'totalQuantity', 'upTolerance', 'lowTolerance',
+                'enableMake', 'makerRateLimit', 'strictUpBound', 'povLimit',
+                'povMinLimit', 'limitPrice', 'worstPrice', 'tailOrderProtection',
+                'mustComplete', 'executionDurationSeconds', 'recvWindow']:
+        if key in kwargs:
+            params[key] = kwargs[key]
+
+    url_path = f"/user/trading/master-orders/{masterOrderId}/update"
+    return self.sign_request("PUT", url_path, params)
 
 
 def cancel_master_order(self, masterOrderId: str, **kwargs):

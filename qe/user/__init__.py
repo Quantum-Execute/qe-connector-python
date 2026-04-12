@@ -15,6 +15,9 @@ class User(API):
     from qe.user.trading import get_order_fills
     from qe.user.trading import get_tca_analysis
     from qe.user.trading import create_master_order
+    from qe.user.trading import pause_master_order
+    from qe.user.trading import resume_master_order
+    from qe.user.trading import update_master_order_params
     from qe.user.trading import cancel_master_order
     from qe.user.trading import create_listen_key
 
