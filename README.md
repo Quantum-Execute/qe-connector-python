@@ -411,7 +411,7 @@ from qe.lib import Algorithm, Exchange, MarketType, OrderSide, StrategyType, Mar
 # TWAP 订单示例 - 使用枚举创建订单（推荐）
 response = client.create_master_order(
     algorithm=Algorithm.TWAP,                      # 使用算法枚举
-    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP、Exchange.DERIBIT                     # 使用交易所枚举（Binance、OKX、LTP 或 Deribit）
+    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP、Exchange.DERIBIT、Exchange.HYPERLIQUID  # 使用交易所枚举（Binance、OKX、LTP、Deribit 或 Hyperliquid）
     symbol="BTCUSDT",
     marketType=MarketType.SPOT,                    # 使用市场类型枚举
     side=OrderSide.BUY,                           # 使用订单方向枚举
@@ -441,7 +441,7 @@ else:
 # 目标仓位下单示例 - 买入 1.5 BTC 到目标仓位
 response = client.create_master_order(
     algorithm=Algorithm.TWAP,                      # 使用算法枚举
-    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP、Exchange.DERIBIT                     # 使用交易所枚举（Binance、OKX、LTP 或 Deribit）
+    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP、Exchange.DERIBIT、Exchange.HYPERLIQUID  # 使用交易所枚举（Binance、OKX、LTP、Deribit 或 Hyperliquid）
     symbol="BTCUSDT",
     marketType=MarketType.SPOT,                    # 使用市场类型枚举
     side=OrderSide.BUY,                           # 使用订单方向枚举
@@ -558,6 +558,7 @@ if response.get('success'):
 | ├─ enableMake          | bool    | 是否允许挂单                                                                                                                                                 |
 | ├─ makerRate           | float    | 被动成交率                                                                                                                                                  |
 | ├─ clientOrderId       | string   | 用户自定义的订单ID                                                                                                                                              |
+| ├─ finishedMs          | int      | 母单结束时间（epoch毫秒），0表示未结束                                                                                                                              |
 | total | int | 总数 |
 | page | int | 当前页码 |
 | pageSize | int | 每页数量 |
@@ -798,6 +799,7 @@ print(f"总成交额: ${total_value:.2f}, 总手续费: ${total_fee:.2f}")
 | VWAP_Slippage_pct_Fartouch | float | VWAP滑点（相比对手价） |
 | IntervalReturn | float | 区间理论收益率 |
 | ParticipationRate | float | 市场参与率 |
+| FeeSaving_pct | float | 手续费节省率 |
 
 **示例代码：**
 
