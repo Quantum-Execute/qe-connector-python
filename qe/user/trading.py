@@ -335,7 +335,8 @@ def update_master_order_params(self, masterOrderId: str, **kwargs):
         worstPrice (float, optional): Worst acceptable price, -1 for no limit
         tailOrderProtection (bool, optional): Tail order protection
         mustComplete (bool, optional): Whether must complete within duration
-        executionDurationSeconds (int, optional): Execution duration in seconds, must be > 10
+        executionDurationSeconds (int, optional): Execution duration in seconds, must be > 10. Mutually exclusive with executionDuration.
+        executionDuration (int, optional): Execution duration in minutes, must be >= 1. Mutually exclusive with executionDurationSeconds.
         recvWindow (int, optional): The value cannot be greater than 60000
     """
     check_required_parameters([[masterOrderId, "masterOrderId"]])
@@ -345,7 +346,7 @@ def update_master_order_params(self, masterOrderId: str, **kwargs):
     for key in ['orderNotional', 'totalQuantity', 'upTolerance', 'lowTolerance',
                 'enableMake', 'makerRateLimit', 'strictUpBound', 'povLimit',
                 'povMinLimit', 'limitPrice', 'worstPrice', 'tailOrderProtection',
-                'mustComplete', 'executionDurationSeconds', 'recvWindow']:
+                'mustComplete', 'executionDurationSeconds', 'executionDuration', 'recvWindow']:
         if key in kwargs:
             params[key] = kwargs[key]
 
