@@ -2,7 +2,7 @@
 
 本文件记录 `qe-connector`（Python SDK）的用户可见变更。
 
-## 1.0.26 - 2026-04-12
+## 1.0.27 - 2026-04-12
 
 ### 新增
 - **Hyperliquid 支持**：`Exchange` 枚举新增 `HYPERLIQUID = "Hyperliquid"`
