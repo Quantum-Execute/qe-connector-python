@@ -14,8 +14,6 @@ class Algorithm(str, Enum):
     TWAP = "TWAP"            # TWAP算法
     VWAP = "VWAP"            # VWAP算法
     POV = "POV"              # POV算法
-    BoostVWAP = "BoostVWAP"  # BoostVWAP算法（高频alpha发单）
-    BoostTWAP = "BoostTWAP"  # BoostTWAP算法（高频alpha发单）
 
 
 class StrategyType(str, Enum):
