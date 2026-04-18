@@ -155,10 +155,10 @@ def create_master_order(self,
     Keyword Args:
         totalQuantity (float, optional): Total quantity to trade
         orderNotional (float, optional): Order notional value
-        strategyType (StrategyType | str, optional): Strategy type (e.g., StrategyType.TWAP_1, StrategyType.TWAP_2, StrategyType.POV)
+        strategyType (StrategyType | str, optional): Strategy type (e.g., StrategyType.TWAP_1, StrategyType.POV)
         startTime (str, optional): Start time
         executionDuration (int, optional): Execution duration
-        executionDurationSeconds (int, optional): Execution duration in seconds. Only used for TWAP-1. When provided and > 0, it takes precedence over executionDuration (minutes). Must be greater than 10 seconds.
+        executionDurationSeconds (int, optional): Execution duration in seconds. Available for all strategies (TWAP-1 / POV). When provided and > 0, it takes precedence over executionDuration (minutes). Must be greater than 10 seconds.
         limitPrice (float, optional): Deprecated, use worstPrice instead. Limit price
         mustComplete (bool, optional): Must complete flag
         makerRateLimit (float, optional): Maker rate limit
