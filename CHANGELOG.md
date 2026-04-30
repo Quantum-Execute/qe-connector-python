@@ -82,6 +82,7 @@
   - 新增字段`makerRate`，被动成交率
   - 新增字段`enableMake`，是否允许挂单
   - 新增字段`tailOrderProtection`，尾单保护开关
+  - 新增字段`commission`，手续费明细，格式为字典
 
 ### 文档
 - **创建母单入参文档更新**：
@@ -140,5 +141,4 @@
 
 ### 文档
 - README：`exchange` 可选值补充 `Deribit`，并补充 Deribit BTCUSD/ETHUSD 的数量字段说明。
-
 

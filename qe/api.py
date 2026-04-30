@@ -2,6 +2,7 @@ import json
 from json import JSONDecodeError
 import logging
 import requests
+from requests.adapters import HTTPAdapter
 from .__version__ import __version__
 from qe.error import ClientError, ServerError
 from qe.lib.utils import get_timestamp
@@ -48,6 +49,12 @@ class API(object):
         self.private_key = private_key
         self.private_key_pass = private_key_pass
         self.session = requests.Session()
+        # 把 HTTP/HTTPS 连接池调到单 host 32 路，默认值（10）在并发稍高时
+        # 就会退化成"每次新建 TCP+TLS"的慢路径；调高后配合 NGINX 上游 keepalive，
+        # 同 host 的多次请求几乎可以全部命中复用，不再吃 SSL 握手的 ~3ms。
+        adapter = HTTPAdapter(pool_connections=32, pool_maxsize=32, max_retries=0)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
         self.session.headers.update(
             {
                 "Content-Type": "application/json;charset=utf-8",
