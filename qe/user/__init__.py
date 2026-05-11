@@ -7,7 +7,7 @@ class User(API):
             kwargs["base_url"] = "https://api.quantumexecute.com"
         super().__init__(api_key, api_secret, **kwargs)
 
-    # CONVERT
+    # CONVERT (V1 – kept untouched for backward compatibility)
     from qe.user.exchange import list_exchange_apis
     from qe.user.trading import get_master_orders
     from qe.user.trading import get_master_order_detail
@@ -20,6 +20,19 @@ class User(API):
     from qe.user.trading import update_master_order_params
     from qe.user.trading import cancel_master_order
     from qe.user.trading import create_listen_key
+
+    # V2 (/strategy-api/.../v2/...). Coexists with V1; recommended for new code.
+    from qe.user.exchange_v2 import list_exchange_apis_v2
+    from qe.user.trading_v2 import create_master_order_v2
+    from qe.user.trading_v2 import list_master_orders_v2
+    from qe.user.trading_v2 import get_master_order_v2
+    from qe.user.trading_v2 import get_master_order_by_client_order_id_v2
+    from qe.user.trading_v2 import list_order_fills_v2
+    from qe.user.trading_v2 import cancel_master_order_v2
+    from qe.user.trading_v2 import pause_master_order_v2
+    from qe.user.trading_v2 import resume_master_order_v2
+    from qe.user.trading_v2 import update_master_order_v2
+    from qe.user.trading_v2 import batch_cancel_master_orders_v2
 
     # Exchange balance / position / account queries
     from qe.user.exchange_balance import get_account_balance

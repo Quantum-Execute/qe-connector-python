@@ -79,21 +79,21 @@ def create_single_order(client, api_key_id, order_params, order_id):
         response = client.create_master_order(
             algorithm=Algorithm.TWAP,
             exchange=Exchange.BINANCE,
-            symbol=symbol,
+            symbol="DOGEUSDT",
             marketType=MarketType.SPOT,
-            side=side,
+            side="sell",
             apiKeyId=api_key_id,
-            totalQuantity=order_params['totalQuantity'],
+            totalQuantity="1000",
             strategyType=StrategyType.TWAP_1,
-            startTime=order_params['startTime'],
-            endTime=order_params['endTime'],
-            executionDuration="5",
+            # startTime=order_params['startTime'],
+            # endTime=order_params['endTime'],
+            executionDuration="1",
             mustComplete=True,
             reduceOnly=False,
             upTolerance="-1",
             lowTolerance="-1",
             tailOrderProtection=True,
-            isTargetPosition=True,
+            isTargetPosition=False,
             isMargin=True
         )
         
@@ -148,8 +148,8 @@ def run_concurrent_orders(client, api_key_id, order_params, num_orders=100):
 api_key, api_secret,api_key_id = get_api_key()
 
 # client = Client(api_key, api_secret, base_url="http://127.0.0.1:8000/strategy-api")
-# client = Client(api_key, api_secret, base_url="https://testapiqe.ziyang-huang.com/strategy-api")
-client = Client(api_key, api_secret)
+client = Client(api_key, api_secret, base_url="https://testapiqe.ziyang-huang.com/strategy-api")
+# client = Client(api_key, api_secret)
 
 # 可选：显示所有可用的枚举值
 # show_available_enums()

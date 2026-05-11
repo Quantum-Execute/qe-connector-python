@@ -88,6 +88,89 @@ response = client.create_master_order(
 )
 ```
 
+## V2 接口（推荐用于新接入）
+
+自 `1.1.0` 起 SDK 同步上线 V2 strategy-api 接口，路径形如 `/strategy-api/.../v2/...`。**V1 方法保留不变**，老业务可以平滑迁移。
+
+V2 主要差异：
+
+- **JSON 命名**：lowerCamelCase（`apiKeyId`、`startTimeMs`、`cumFilledQty` 等）；
+- **Decimal 字段**：`totalQuantity`、`orderNotional`、`worstPrice`、`makerRateLimit`、`povLimit`、`povMinLimit`、`upTolerance`、`lowTolerance`、`limitPrice` 一律使用 `str` 传输，传入 `Decimal/int/float` 时 SDK 会统一序列化成字符串；
+- **时间**：`startTimeMs` epoch 毫秒（`int`），列表筛选 `startTime/endTime` 使用 RFC3339；
+- **隐藏字段**：母单不再返回 `apiKey/apiKeyName/limitPrice/algoStartTimeMs` 等内部字段；子单不再返回 `fee/tradingAccount`；API Key 不再返回 `verificationMethod/balance`；
+- **重命名**：母单出参 `apiKeyUuid`、`cumFilledQty/cumFilledNotional/avgFilledPrice/worstPrice`，子单出参 `orderId`（取代 `subOrderId`）、`filledNotional`（取代 `filledValue`）、`baseCurrency/quoteCurrency`、`orderType`；
+- **状态枚举完整化**：`MasterOrderStatusV2` 包含 `NEW / WAITING / PROCESSING / PAUSED / CANCELLED / COMPLETED / REJECTED / EXPIRED`；
+- **分页**：`pageSize` 上限 100，超过时 SDK 仅打 warning，由服务端裁剪。
+
+### V2 方法清单（挂在 `User` 上）
+
+| 方法 | 说明 |
+| --- | --- |
+| `list_exchange_apis_v2()` | API Key 列表 V2 |
+| `create_master_order_v2(request|**kwargs)` | 创建母单 V2 |
+| `list_master_orders_v2(**kwargs)` | 母单列表 V2 |
+| `get_master_order_v2(masterOrderId)` | 母单详情 V2 |
+| `get_master_order_by_client_order_id_v2(clientOrderId)` | 按客户端订单 ID 查母单 |
+| `list_order_fills_v2(**kwargs)` | 子单/成交列表 V2 |
+| `cancel_master_order_v2(masterOrderId, reason=...)` | 取消 |
+| `pause_master_order_v2(masterOrderId, reason=...)` | 暂停 |
+| `resume_master_order_v2(masterOrderId, reason=...)` | 恢复 |
+| `update_master_order_v2(masterOrderId, request|**kwargs)` | 修改运行中母单参数 |
+| `batch_cancel_master_orders_v2(ids, reason=...)` | 批量取消 |
+
+### V2 类型（`from qe import ...` 或 `from qe.lib import ...`）
+
+`CreateMasterOrderV2Request`、`CreateMasterOrderV2Reply`、`MasterOrderV2Info`、`MasterOrderListV2Reply`、`OrderFillV2Info`、`OrderFillListV2Reply`、`ExchangeApiV2Info`、`ExchangeApiListV2Reply`、`MasterOrderActionV2Reply`、`UpdateMasterOrderV2Request`、`BatchCancelV2Reply`、`BatchCancelV2FailedItem`、`MasterOrderStatusV2`。
+
+请求 dataclass 提供 `to_payload()`，会按 V2 约定把 Decimal 字段序列化成字符串、剔除 `None`；响应 dataclass 提供 `from_dict(raw)`，便于把后端 dict 转为带类型的对象。
+
+### V2 端到端示例
+
+```python
+from qe.user import User as Client
+from qe import (
+    CreateMasterOrderV2Request,
+    CreateMasterOrderV2Reply,
+    MasterOrderListV2Reply,
+    MasterOrderStatusV2,
+)
+
+client = Client(
+    api_key="your-api-key",
+    api_secret="your-api-secret",
+    base_url="https://api.quantumexecute.com/strategy-api",
+)
+
+# 1. 创建母单（V2）
+req = CreateMasterOrderV2Request(
+    apiKeyId="binding-uuid",
+    exchange="Binance",
+    marketType="PERP",
+    symbol="BTCUSDT",
+    side="buy",
+    algorithm="TWAP",
+    executionDurationSeconds=3600,
+    totalQuantity="0.5",          # Decimal 字符串
+    worstPrice="70000",           # 取代 V1 的 limitPrice
+    mustComplete=True,
+    clientOrderId="client-order-001",
+)
+created = CreateMasterOrderV2Reply.from_dict(client.create_master_order_v2(req))
+print("masterOrderId =", created.masterOrderId)
+
+# 2. 列表（V2）
+page = MasterOrderListV2Reply.from_dict(
+    client.list_master_orders_v2(page=1, pageSize=20, status=MasterOrderStatusV2.PROCESSING.value)
+)
+for o in page.items:
+    print(o.masterOrderId, o.status, o.cumFilledQty, "/", o.totalQuantity)
+
+# 3. 取消（V2）
+client.cancel_master_order_v2(created.masterOrderId, reason="manual cleanup")
+```
+
+更完整的样例见 [`examples/user/v2/`](examples/user/v2/)。
+
 ## API 参考
 
 ### 公共接口
