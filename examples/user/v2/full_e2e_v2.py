@@ -341,12 +341,12 @@ def main() -> int:
     results.append(r)
 
     # ──────────────────────────────────────────────────────────────────
-    # 7) PUT /user/trading/v2/master-orders/{id}/pause
+    # 7) PUT /user/trading/v2/master-orders/{masterOrderId}/pause
     # ──────────────────────────────────────────────────────────────────
     r = Result(
         name="Pause Master Order",
         method="PUT",
-        path="/user/trading/v2/master-orders/{id}/pause",
+        path="/user/trading/v2/master-orders/{masterOrderId}/pause",
     )
     if not first_moid:
         r.skip = True
@@ -366,12 +366,12 @@ def main() -> int:
     results.append(r)
 
     # ──────────────────────────────────────────────────────────────────
-    # 8) PUT /user/trading/v2/master-orders/{id}/resume
+    # 8) PUT /user/trading/v2/master-orders/{masterOrderId}/resume
     # ──────────────────────────────────────────────────────────────────
     r = Result(
         name="Resume Master Order",
         method="PUT",
-        path="/user/trading/v2/master-orders/{id}/resume",
+        path="/user/trading/v2/master-orders/{masterOrderId}/resume",
     )
     if not first_moid:
         r.skip = True
@@ -391,12 +391,12 @@ def main() -> int:
     results.append(r)
 
     # ──────────────────────────────────────────────────────────────────
-    # 9) PUT /user/trading/v2/master-orders/{id}/update
+    # 9) PUT /user/trading/v2/master-orders/{masterOrderId}/update
     # ──────────────────────────────────────────────────────────────────
     r = Result(
         name="Update Master Order",
         method="PUT",
-        path="/user/trading/v2/master-orders/{id}/update",
+        path="/user/trading/v2/master-orders/{masterOrderId}/update",
     )
     if not first_moid:
         r.skip = True
@@ -417,12 +417,12 @@ def main() -> int:
     results.append(r)
 
     # ──────────────────────────────────────────────────────────────────
-    # 10) PUT /user/trading/v2/master-orders/{id}/cancel
+    # 10) PUT /user/trading/v2/master-orders/{masterOrderId}/cancel
     # ──────────────────────────────────────────────────────────────────
     r = Result(
         name="Cancel Master Order",
         method="PUT",
-        path="/user/trading/v2/master-orders/{id}/cancel",
+        path="/user/trading/v2/master-orders/{masterOrderId}/cancel",
     )
     if not first_moid:
         r.skip = True

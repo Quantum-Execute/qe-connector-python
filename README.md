@@ -97,10 +97,10 @@ V2 主要差异：
 - **JSON 命名**：lowerCamelCase（`apiKeyId`、`startTimeMs`、`cumFilledQty` 等）；
 - **Decimal 字段**：`totalQuantity`、`orderNotional`、`worstPrice`、`makerRateLimit`、`povLimit`、`povMinLimit`、`upTolerance`、`lowTolerance`、`limitPrice` 一律使用 `str` 传输，传入 `Decimal/int/float` 时 SDK 会统一序列化成字符串；
 - **时间**：`startTimeMs` epoch 毫秒（`int`），列表筛选 `startTime/endTime` 使用 RFC3339；
-- **隐藏字段**：母单不再返回 `apiKey/apiKeyName/limitPrice/algoStartTimeMs` 等内部字段；子单不再返回 `fee/tradingAccount`；API Key 不再返回 `verificationMethod/balance`；
+- **隐藏字段**：母单不再返回 `apiKey/apiKeyName/limitPrice/algoStartTimeMs` 等内部字段，但会返回 `tradingAccount` 便于展示交易账户；子单不再返回 `fee/tradingAccount`；API Key 不再返回 `verificationMethod/balance`；
 - **重命名**：母单出参 `apiKeyUuid`、`cumFilledQty/cumFilledNotional/avgFilledPrice/worstPrice`，子单出参 `orderId`（取代 `subOrderId`）、`filledNotional`（取代 `filledValue`）、`baseCurrency/quoteCurrency`、`orderType`；
 - **状态枚举完整化**：`MasterOrderStatusV2` 包含 `NEW / WAITING / PROCESSING / PAUSED / CANCELLED / COMPLETED / REJECTED / EXPIRED`；
-- **分页**：`pageSize` 上限 100，超过时 SDK 仅打 warning，由服务端裁剪。
+- **分页**：`pageSize` 上限 100，超过 100 会返回错误，不再静默裁剪。
 
 ### V2 方法清单（挂在 `User` 上）
 

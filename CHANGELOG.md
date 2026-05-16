@@ -31,11 +31,11 @@
   - `User.list_exchange_apis_v2()` → `GET /user/exchange/v2/exchange-apis`
   - `User.create_master_order_v2()` → `POST /user/trading/v2/master-orders`
   - `User.list_master_orders_v2()` → `GET /user/trading/v2/master-orders`
-  - `User.get_master_order_v2(masterOrderId)` → `GET /user/trading/v2/master-orders/{id}`
-  - `User.get_master_order_by_client_order_id_v2(clientOrderId)` → `GET /user/trading/v2/master-orders/by-client-order-id/{id}`
+  - `User.get_master_order_v2(masterOrderId)` → `GET /user/trading/v2/master-orders/{masterOrderId}`
+  - `User.get_master_order_by_client_order_id_v2(clientOrderId)` → `GET /user/trading/v2/master-orders/by-client-order-id/{clientOrderId}`
   - `User.list_order_fills_v2()` → `GET /user/trading/v2/order-fills`
-  - `User.cancel_master_order_v2()` / `pause_master_order_v2()` / `resume_master_order_v2()` → `PUT /user/trading/v2/master-orders/{id}/{cancel|pause|resume}`
-  - `User.update_master_order_v2()` → `PUT /user/trading/v2/master-orders/{id}/update`
+  - `User.cancel_master_order_v2()` / `pause_master_order_v2()` / `resume_master_order_v2()` → `PUT /user/trading/v2/master-orders/{masterOrderId}/{cancel|pause|resume}`
+  - `User.update_master_order_v2()` → `PUT /user/trading/v2/master-orders/{masterOrderId}/update`
   - `User.batch_cancel_master_orders_v2()` → `PUT /user/trading/v2/master-orders/batch-cancel`
 - **V2 类型层**（`qe.lib.trading_v2_types`，亦在 `qe`、`qe.lib` 重新导出）：
   - 请求体 dataclass：`CreateMasterOrderV2Request`、`UpdateMasterOrderV2Request`
@@ -201,4 +201,3 @@
 
 ### 文档
 - README：`exchange` 可选值补充 `Deribit`，并补充 Deribit BTCUSD/ETHUSD 的数量字段说明。
-

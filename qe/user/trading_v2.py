@@ -9,7 +9,6 @@ Reference: ``backend-server/docs/frontend-v2-api-upgrade.md`` sections 4–7.
 """
 from __future__ import annotations
 
-import warnings
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 from qe.lib.trading_enums import Algorithm, Exchange, MarketType, OrderSide, MarginType
@@ -71,12 +70,7 @@ def _coerce_enum(value: Any) -> Any:
 
 def _check_page_size(page_size: Optional[int]) -> None:
     if page_size is not None and page_size > PAGE_SIZE_MAX:
-        warnings.warn(
-            f"pageSize {page_size} exceeds V2 limit {PAGE_SIZE_MAX}; "
-            "the server will clamp it to 100.",
-            UserWarning,
-            stacklevel=3,
-        )
+        raise ValueError(f"pageSize {page_size} exceeds V2 limit {PAGE_SIZE_MAX}")
 
 
 def _normalize_pagination_kwargs(kwargs: Dict[str, Any]) -> None:
@@ -226,7 +220,7 @@ def list_master_orders_v2(self, **kwargs):
 
     Keyword Args:
         page (int, optional): 1-based page number.
-        pageSize (int, optional): Items per page; max 100 (clamped server-side).
+        pageSize (int, optional): Items per page; max 100.
         status (str, optional): One of ``MasterOrderStatusV2``.
         exchange (str, optional): Filter by exchange.
         symbol (str, optional): Filter by trading pair.
@@ -284,7 +278,7 @@ def list_order_fills_v2(self, **kwargs):
 
     Keyword Args:
         page (int, optional): 1-based page number.
-        pageSize (int, optional): Items per page; max 100 (clamped server-side).
+        pageSize (int, optional): Items per page; max 100.
         masterOrderId (str, optional): Filter by parent master order.
         orderId (str, optional): Exchange order ID (V2 replaces ``subOrderId``).
         clientOrderId (str, optional): Filter by user-defined order ID.

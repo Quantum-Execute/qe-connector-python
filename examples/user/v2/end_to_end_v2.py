@@ -11,7 +11,8 @@ Walks through the V2 happy path against `/strategy-api/.../v2/...`:
 6. Cancel the master order (V2)
 
 Compared with V1, V2 hides internal fields (``apiKey/apiKeyName``,
-``balance``, ``fee``, ``tradingAccount``, …) and renames a few:
+``balance``, ``fee``, …), keeps ``tradingAccount`` on master orders for
+display, and renames a few:
 ``cumFilledQty/cumFilledNotional/avgFilledPrice``, ``orderId`` (was
 ``subOrderId``) and ``filledNotional`` (was ``filledValue``).
 

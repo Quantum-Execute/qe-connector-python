@@ -67,7 +67,7 @@ _MARKET_TYPES = frozenset({"SPOT", "PERP"})
 # 创建/查询母单时允许的交易所。V2 文档第 2 节定义。
 _EXCHANGES = frozenset({"Binance", "OKX", "LTP", "Deribit", "Hyperliquid"})
 
-# V2 文档默认 pageSize 上限（>100 服务端会按 100 处理；客户端打 warning）。
+# V2 文档默认 pageSize 上限；>100 会被 V2 接口明确拒绝。
 PAGE_SIZE_MAX = 100
 
 
@@ -246,6 +246,7 @@ class MasterOrderV2Info:
     masterOrderId: Optional[str] = None
     clientOrderId: Optional[str] = None
     apiKeyUuid: Optional[str] = None
+    tradingAccount: Optional[str] = None
     exchange: Optional[str] = None
     marketType: Optional[str] = None
     category: Optional[str] = None
@@ -424,7 +425,7 @@ class MasterOrderActionV2Reply:
 
 @dataclass
 class UpdateMasterOrderV2Request:
-    """V2 ``PUT /user/trading/v2/master-orders/{id}/update`` 请求体。
+    """V2 ``PUT /user/trading/v2/master-orders/{masterOrderId}/update`` 请求体。
 
     所有字段可选；只填需要更新的字段。
     """
