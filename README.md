@@ -280,7 +280,7 @@ except Exception as e:
 | ├─ updatedAt | string | 更新时间 |
 | page | int | 当前页码 |
 | pageSize | int | 每页数量 |
-| total | string | 总数 |
+| total | int | 总数 |
 
 **示例代码：**
 

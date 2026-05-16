@@ -79,6 +79,11 @@ def _check_page_size(page_size: Optional[int]) -> None:
         )
 
 
+def _normalize_pagination_kwargs(kwargs: Dict[str, Any]) -> None:
+    if "page_size" in kwargs and "pageSize" not in kwargs:
+        kwargs["pageSize"] = kwargs.pop("page_size")
+
+
 # ---------------------------------------------------------------------------
 # Create / list / detail
 # ---------------------------------------------------------------------------
@@ -236,6 +241,7 @@ def list_master_orders_v2(self, **kwargs):
         dict: Raw paginated response. Use
         :meth:`MasterOrderListV2Reply.from_dict` for typed access.
     """
+    _normalize_pagination_kwargs(kwargs)
     _check_page_size(kwargs.get("pageSize"))
     if "status" in kwargs:
         kwargs["status"] = _coerce_enum(kwargs["status"])
@@ -287,6 +293,7 @@ def list_order_fills_v2(self, **kwargs):
         startTime / endTime (str, optional): RFC3339/ISO 8601 bounds.
         recvWindow (int, optional): Max 60000.
     """
+    _normalize_pagination_kwargs(kwargs)
     _check_page_size(kwargs.get("pageSize"))
     return self.sign_request("GET", _FILLS_PATH, {**kwargs})
 
