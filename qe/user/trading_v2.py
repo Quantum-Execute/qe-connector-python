@@ -78,6 +78,14 @@ def _normalize_pagination_kwargs(kwargs: Dict[str, Any]) -> None:
         kwargs["pageSize"] = kwargs.pop("page_size")
 
 
+def _split_v2_body_query(params: Dict[str, Any]) -> tuple[Dict[str, Any], Dict[str, Any]]:
+    query: Dict[str, Any] = {}
+    body = dict(params)
+    if "recvWindow" in body:
+        query["recvWindow"] = body.pop("recvWindow")
+    return body, query
+
+
 # ---------------------------------------------------------------------------
 # Create / list / detail
 # ---------------------------------------------------------------------------
@@ -210,7 +218,8 @@ def create_master_order_v2(
         except (TypeError, ValueError) as exc:
             raise ValueError("startTimeMs must be an integer epoch milliseconds") from exc
 
-    return self.sign_request("POST", _BASE_PATH, params)
+    body, query = _split_v2_body_query(params)
+    return self.sign_json_request("POST", _BASE_PATH, body, query)
 
 
 def list_master_orders_v2(self, **kwargs):
@@ -308,7 +317,9 @@ def cancel_master_order_v2(self, masterOrderId: str, *, reason: Optional[str] = 
         params["reason"] = reason
     params.update({k: v for k, v in kwargs.items() if v is not None})
     url_path = f"{_BASE_PATH}/{masterOrderId}/cancel"
-    return self.sign_request("PUT", url_path, params)
+    params.pop("masterOrderId", None)
+    body, query = _split_v2_body_query(params)
+    return self.sign_json_request("PUT", url_path, body, query)
 
 
 def pause_master_order_v2(self, masterOrderId: str, *, reason: Optional[str] = None, **kwargs):
@@ -322,7 +333,9 @@ def pause_master_order_v2(self, masterOrderId: str, *, reason: Optional[str] = N
         params["reason"] = reason
     params.update({k: v for k, v in kwargs.items() if v is not None})
     url_path = f"{_BASE_PATH}/{masterOrderId}/pause"
-    return self.sign_request("PUT", url_path, params)
+    params.pop("masterOrderId", None)
+    body, query = _split_v2_body_query(params)
+    return self.sign_json_request("PUT", url_path, body, query)
 
 
 def resume_master_order_v2(self, masterOrderId: str, *, reason: Optional[str] = None, **kwargs):
@@ -336,7 +349,9 @@ def resume_master_order_v2(self, masterOrderId: str, *, reason: Optional[str] = 
         params["reason"] = reason
     params.update({k: v for k, v in kwargs.items() if v is not None})
     url_path = f"{_BASE_PATH}/{masterOrderId}/resume"
-    return self.sign_request("PUT", url_path, params)
+    params.pop("masterOrderId", None)
+    body, query = _split_v2_body_query(params)
+    return self.sign_json_request("PUT", url_path, body, query)
 
 
 def update_master_order_v2(
@@ -410,9 +425,9 @@ def update_master_order_v2(
             raise ValueError("executionDurationSeconds must be greater than 10")
         params["executionDurationSeconds"] = duration_int
 
-    params["masterOrderId"] = masterOrderId
     url_path = f"{_BASE_PATH}/{masterOrderId}/update"
-    return self.sign_request("PUT", url_path, params)
+    body, query = _split_v2_body_query(params)
+    return self.sign_json_request("PUT", url_path, body, query)
 
 
 def batch_cancel_master_orders_v2(
@@ -444,4 +459,5 @@ def batch_cancel_master_orders_v2(
     params.update({k: v for k, v in kwargs.items() if v is not None})
 
     url_path = f"{_BASE_PATH}/batch-cancel"
-    return self.sign_request("PUT", url_path, params)
+    body, query = _split_v2_body_query(params)
+    return self.sign_json_request("PUT", url_path, body, query)

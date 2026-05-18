@@ -1,6 +1,7 @@
 import json
 from json import JSONDecodeError
 import logging
+import math
 import requests
 from requests.adapters import HTTPAdapter
 from .__version__ import __version__
@@ -100,6 +101,33 @@ class API(object):
         payload["signature"] = self._get_sign(query_string)
         return self.send_request(http_method, url_path, payload)
 
+    def sign_json_request(self, http_method, url_path, body=None, query=None):
+        """Send a signed request whose business payload belongs in JSON body.
+
+        The server verifies strategy-api writes by signing the merge of URL
+        query auth fields and JSON body top-level fields. Only timestamp,
+        recvWindow, and signature are sent in the URL query; body business
+        fields stay in the JSON body.
+        """
+        if body is None:
+            body = {}
+        if query is None:
+            query = {}
+
+        clean_body = cleanNoneValue(dict(body))
+        clean_query = cleanNoneValue(dict(query))
+
+        timestamp = str(get_timestamp())
+        sign_payload = dict(clean_query)
+        sign_payload["timestamp"] = timestamp
+        sign_payload.update(self._json_body_sign_params(clean_body))
+        query_string = self._prepare_params(sign_payload)
+
+        request_query = dict(clean_query)
+        request_query["timestamp"] = timestamp
+        request_query["signature"] = self._get_sign(query_string)
+        return self.send_json_request(http_method, url_path, clean_body, request_query)
+
     def limited_encoded_sign_request(self, http_method, url_path, payload=None):
         """This is used for some endpoints has special symbol in the url.
         In some endpoints these symbols should not encoded
@@ -132,20 +160,41 @@ class API(object):
             }
         )
         response = self._dispatch_request(http_method)(**params)
+        return self._parse_response(response)
+
+    def send_json_request(self, http_method, url_path, body=None, query=None):
+        if body is None:
+            body = {}
+        if query is None:
+            query = {}
+        url = self.base_url + url_path
+        self._logger.debug("url: " + url)
+        params = cleanNoneValue(
+            {
+                "url": url,
+                "params": self._prepare_params(query),
+                "json": cleanNoneValue(body),
+                "timeout": self.timeout,
+                "proxies": self.proxies,
+            }
+        )
+        response = self._dispatch_request(http_method)(**params)
+        return self._parse_response(response)
+
+    def _parse_response(self, response):
         self._logger.debug("raw response from server:" + response.text)
-        
+
         # Handle HTTP errors (4xx, 5xx)
         if response.status_code >= 400:
             self._handle_exception(response)
-        
+
         # Parse response
         try:
             data = response.json()
         except ValueError:
             # If not JSON, return as text
-            data = response.text
-            return data
-        
+            return response.text
+
         # Check API response code (matching Go's logic)
         if isinstance(data, dict) and 'code' in data:
             if data.get('code') != 200:
@@ -160,7 +209,7 @@ class API(object):
                 )
             # Return message field if code is 200 (matching Go's behavior)
             return data.get('message', data)
-        
+
         # For responses without code field, return as is
         result = {}
         if self.show_limit_usage:
@@ -186,6 +235,33 @@ class API(object):
 
     def _prepare_params(self, params):
         return encoded_string(cleanNoneValue(params))
+
+    def _json_body_sign_params(self, body):
+        out = {}
+        for key, value in body.items():
+            if key.lower() == "signature":
+                continue
+            converted = self._scalar_to_sign_string(value)
+            if converted is not None:
+                out[key] = converted
+            else:
+                out[key] = json.dumps(value, separators=(",", ":"), ensure_ascii=False)
+        return out
+
+    def _scalar_to_sign_string(self, value):
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        if isinstance(value, str):
+            return value
+        if isinstance(value, int) and not isinstance(value, bool):
+            return str(value)
+        if isinstance(value, float):
+            if math.isnan(value) or math.isinf(value):
+                return None
+            return f"{value:.15f}".rstrip("0").rstrip(".") or "0"
+        if value is None:
+            return "<nil>"
+        return None
 
     def _get_sign(self, payload):
         if self.private_key is not None:
