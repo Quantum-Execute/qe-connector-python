@@ -2,6 +2,12 @@
 
 本文件记录 `qe-connector`（Python SDK）的用户可见变更。
 
+## 1.2.0 - 2026-05-23
+
+### 新增
+
+- **Bybit 支持**：`Exchange` 枚举新增 `BYBIT = "Bybit"`，V2 交易所校验白名单同步允许 `Bybit`。
+
 ## 1.1.1 - 2026-05-11
 
 ### 修复 / 调整（V2 联调发现的 2 处问题）
@@ -46,7 +52,7 @@
   - `executionDurationSeconds` 必须 > 10
   - `totalQuantity` / `orderNotional` 二选一
   - `isTargetPosition=True` 时必须用 `totalQuantity`，禁止 `orderNotional`
-  - `marketType ∈ {SPOT, PERP}`、`exchange ∈ {Binance, OKX, LTP, Deribit, Hyperliquid}`
+  - `marketType ∈ {SPOT, PERP}`、`exchange ∈ {Binance, OKX, LTP, Deribit, Hyperliquid, Bybit}`
 - **Decimal 字符串化**：`totalQuantity / orderNotional / worstPrice / makerRateLimit / povLimit / povMinLimit / upTolerance / lowTolerance / limitPrice` 接受 `str | int | float | Decimal`，序列化时统一转 `str`，避免 JS 浮点精度问题。
 - **示例**：`examples/user/v2/end_to_end_v2.py`（创建 → 列表 → 详情 → 子单 → 取消）、`list_exchange_apis_v2.py`、`batch_cancel_master_orders_v2.py`。
 

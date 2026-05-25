@@ -48,6 +48,7 @@ class Exchange(str, Enum):
     LTP = "LTP"  # LTP
     DERIBIT = "Deribit"  # Deribit
     HYPERLIQUID = "Hyperliquid"  # Hyperliquid
+    BYBIT = "Bybit"  # Bybit
 
 
 class Category(str, Enum):

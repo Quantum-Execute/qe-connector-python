@@ -29,9 +29,9 @@ class MasterOrderStatusV2(str, Enum):
 
     母单状态在 V2 接口里按用途分两类：
 
-    1. 详情 / 推送返回：保留全部 8 个细分状态（``NEW`` / ``WAITING`` /
+    1. 详情 / 推送返回：保留全部 9 个细分状态（``NEW`` / ``WAITING`` /
        ``PROCESSING`` / ``PAUSED`` / ``CANCELLED`` / ``COMPLETED`` /
-       ``REJECTED`` / ``EXPIRED``）。
+       ``COMPLETED_WITHTAIL`` / ``REJECTED`` / ``EXPIRED``）。
     2. 列表查询过滤（``GET /user/trading/v2/master-orders`` 的 ``status``
        入参）：后端只接受 **2 个聚合值**：
 
@@ -53,6 +53,7 @@ class MasterOrderStatusV2(str, Enum):
     PAUSED = "PAUSED"
     CANCELLED = "CANCELLED"
     COMPLETED = "COMPLETED"
+    COMPLETED_WITHTAIL = "COMPLETED_WITHTAIL"
     REJECTED = "REJECTED"
     EXPIRED = "EXPIRED"
 
@@ -65,7 +66,7 @@ MASTER_ORDER_STATUSES_V2 = frozenset(s.value for s in MasterOrderStatusV2)
 _MARKET_TYPES = frozenset({"SPOT", "PERP"})
 
 # 创建/查询母单时允许的交易所。V2 文档第 2 节定义。
-_EXCHANGES = frozenset({"Binance", "OKX", "LTP", "Deribit", "Hyperliquid"})
+_EXCHANGES = frozenset({"Binance", "OKX", "LTP", "Deribit", "Hyperliquid", "Bybit"})
 
 # V2 文档默认 pageSize 上限；>100 会被 V2 接口明确拒绝。
 PAGE_SIZE_MAX = 100
@@ -195,10 +196,6 @@ class CreateMasterOrderV2Request:
     clientOrderId: Optional[str] = None
     notes: Optional[str] = None
 
-    # Legacy compatibility fields (V2 文档 4.2 注释为兼容)
-    limitPrice: Optional[DecimalLike] = None
-    limitPriceString: Optional[str] = None
-
     def to_payload(self) -> Dict[str, Any]:
         decimal_fields = {
             "totalQuantity",
@@ -209,7 +206,6 @@ class CreateMasterOrderV2Request:
             "povMinLimit",
             "upTolerance",
             "lowTolerance",
-            "limitPrice",
         }
         out: Dict[str, Any] = {}
         for f in fields(self):
@@ -439,7 +435,6 @@ class UpdateMasterOrderV2Request:
     strictUpBound: Optional[bool] = None
     povLimit: Optional[DecimalLike] = None
     povMinLimit: Optional[DecimalLike] = None
-    limitPrice: Optional[DecimalLike] = None
     tailOrderProtection: Optional[bool] = None
     mustComplete: Optional[bool] = None
     executionDurationSeconds: Optional[int] = None
@@ -454,7 +449,6 @@ class UpdateMasterOrderV2Request:
             "makerRateLimit",
             "povLimit",
             "povMinLimit",
-            "limitPrice",
             "worstPrice",
         }
         out: Dict[str, Any] = {}

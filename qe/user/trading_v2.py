@@ -9,6 +9,7 @@ Reference: ``backend-server/docs/frontend-v2-api-upgrade.md`` sections 4–7.
 """
 from __future__ import annotations
 
+from decimal import Decimal, InvalidOperation
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 from qe.lib.trading_enums import Algorithm, Exchange, MarketType, OrderSide, MarginType
@@ -37,7 +38,6 @@ _CREATE_DECIMAL_KWARGS = (
     "povMinLimit",
     "upTolerance",
     "lowTolerance",
-    "limitPrice",
 )
 
 # Pass-through kwargs for create_master_order_v2 (non-decimal).
@@ -54,9 +54,17 @@ _CREATE_PASSTHROUGH_KWARGS = (
     "isTargetPosition",
     "clientOrderId",
     "notes",
-    "limitPriceString",
     "recvWindow",
 )
+
+_UNSUPPORTED_CREATE_V2_FIELDS = frozenset({"limitPrice", "limitPriceString"})
+_UNSUPPORTED_UPDATE_V2_FIELDS = frozenset({"limitPrice", "limitPriceString"})
+
+
+def _reject_unsupported_v2_fields(params: Dict[str, Any], unsupported: frozenset[str]) -> None:
+    for field in unsupported:
+        if field in params:
+            raise ValueError(f"{field} is not supported in V2; use worstPrice")
 
 
 def _coerce_enum(value: Any) -> Any:
@@ -84,6 +92,22 @@ def _split_v2_body_query(params: Dict[str, Any]) -> tuple[Dict[str, Any], Dict[s
     if "recvWindow" in body:
         query["recvWindow"] = body.pop("recvWindow")
     return body, query
+
+
+def _default_pov_limit_for_algorithm(algorithm: Any) -> str:
+    value = _coerce_enum(algorithm)
+    if value == "POV":
+        return "0.05"
+    return "1"
+
+
+def _validate_pov_limit(value: Any) -> None:
+    try:
+        numeric = Decimal(str(value))
+    except (InvalidOperation, TypeError, ValueError) as exc:
+        raise ValueError("povLimit must be between 0 and 1") from exc
+    if numeric < 0 or numeric > 1:
+        raise ValueError("povLimit must be between 0 and 1")
 
 
 # ---------------------------------------------------------------------------
@@ -129,8 +153,8 @@ def create_master_order_v2(
 
     All Decimal-shaped kwargs (``totalQuantity``, ``orderNotional``,
     ``worstPrice``, ``makerRateLimit``, ``povLimit``, ``povMinLimit``,
-    ``upTolerance``, ``lowTolerance``, ``limitPrice``) accept ``str`` /
-    ``int`` / ``float`` / ``Decimal`` and are serialised as ``str``.
+    ``upTolerance``, ``lowTolerance``) accept ``str`` / ``int`` / ``float`` /
+    ``Decimal`` and are serialised as ``str``.
 
     Returns:
         dict: Raw response body as returned by the server. Use
@@ -140,6 +164,10 @@ def create_master_order_v2(
         params = request.to_payload()
     else:
         params = {}
+
+    for field in _UNSUPPORTED_CREATE_V2_FIELDS:
+        if field in kwargs:
+            raise ValueError(f"{field} is not supported in V2; use worstPrice")
 
     # Required core fields – kwargs override the dataclass when both
     # are supplied (matches ``dict.update`` semantics).
@@ -163,6 +191,7 @@ def create_master_order_v2(
     for k in _CREATE_DECIMAL_KWARGS:
         if k in kwargs and kwargs[k] is not None:
             params[k] = to_decimal_str(kwargs[k])
+    _reject_unsupported_v2_fields(params, _UNSUPPORTED_CREATE_V2_FIELDS)
 
     # Required field check (after merge).
     check_required_parameters([
@@ -181,6 +210,8 @@ def create_master_order_v2(
     validate_market_type(params["marketType"])
 
     duration = params.get("executionDurationSeconds")
+    if duration is None:
+        raise ValueError("executionDurationSeconds is required")
     if duration is not None:
         try:
             duration_int = int(duration)
@@ -217,6 +248,10 @@ def create_master_order_v2(
             params["startTimeMs"] = int(params["startTimeMs"])
         except (TypeError, ValueError) as exc:
             raise ValueError("startTimeMs must be an integer epoch milliseconds") from exc
+
+    if params.get("povLimit") is None:
+        params["povLimit"] = _default_pov_limit_for_algorithm(params["algorithm"])
+    _validate_pov_limit(params["povLimit"])
 
     body, query = _split_v2_body_query(params)
     return self.sign_json_request("POST", _BASE_PATH, body, query)
@@ -373,15 +408,20 @@ def update_master_order_v2(
     Keyword Args (all optional):
         totalQuantity, orderNotional, upTolerance, lowTolerance,
         enableMake, makerRateLimit, strictUpBound, povLimit, povMinLimit,
-        limitPrice, worstPrice, tailOrderProtection, mustComplete,
+        worstPrice, tailOrderProtection, mustComplete,
         executionDurationSeconds.
     """
     check_required_parameters([[masterOrderId, "masterOrderId"]])
+
+    for field in _UNSUPPORTED_UPDATE_V2_FIELDS:
+        if field in kwargs:
+            raise ValueError(f"{field} is not supported in V2; use worstPrice")
 
     if request is not None:
         params: Dict[str, Any] = request.to_payload()
     else:
         params = {}
+    _reject_unsupported_v2_fields(params, _UNSUPPORTED_UPDATE_V2_FIELDS)
 
     decimal_kwargs = {
         "totalQuantity",
@@ -391,7 +431,6 @@ def update_master_order_v2(
         "makerRateLimit",
         "povLimit",
         "povMinLimit",
-        "limitPrice",
         "worstPrice",
     }
     passthrough_kwargs = {
@@ -410,9 +449,7 @@ def update_master_order_v2(
         elif k in passthrough_kwargs:
             params[k] = v
         else:
-            # Unknown field – forward as-is so future server fields work
-            # without a SDK release.
-            params[k] = v
+            raise ValueError(f"{k} is not a supported V2 update field")
 
     if "executionDurationSeconds" in params and params["executionDurationSeconds"] is not None:
         try:

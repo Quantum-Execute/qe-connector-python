@@ -70,7 +70,7 @@ from qe.lib import Algorithm, Exchange, MarketType, OrderSide, StrategyType, Mar
 
 # 可用的枚举值
 print("算法类型:", [algo.value for algo in Algorithm])           # ['TWAP', 'VWAP', 'POV']
-print("交易所:", [exchange.value for exchange in Exchange])     # ['Binance', 'OKX', 'LTP', 'Deribit', 'Hyperliquid']
+print("交易所:", [exchange.value for exchange in Exchange])     # ['Binance', 'OKX', 'LTP', 'Deribit', 'Hyperliquid', 'Bybit']
 print("市场类型:", [market.value for market in MarketType])     # ['SPOT', 'PERP']
 print("订单方向:", [side.value for side in OrderSide])         # ['buy', 'sell']
 print("策略类型:", [strategy.value for strategy in StrategyType]) # ['TWAP_1', 'POV']
@@ -81,7 +81,7 @@ print("母单状态:", [status.value for status in MasterOrderStatus])  # ['NEW'
 # 使用枚举创建订单（推荐）
 response = client.create_master_order(
     algorithm=Algorithm.TWAP,        # 而不是 "TWAP"
-    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP、Exchange.DERIBIT、Exchange.HYPERLIQUID       # 而不是 "Binance"（支持 Binance、OKX、LTP、Deribit、Hyperliquid）
+    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP、Exchange.DERIBIT、Exchange.HYPERLIQUID、Exchange.BYBIT       # 而不是 "Binance"（支持 Binance、OKX、LTP、Deribit、Hyperliquid、Bybit）
     marketType=MarketType.SPOT,      # 而不是 "SPOT"
     side=OrderSide.BUY,             # 而不是 "buy"
     # ... 其他参数
@@ -95,11 +95,13 @@ response = client.create_master_order(
 V2 主要差异：
 
 - **JSON 命名**：lowerCamelCase（`apiKeyId`、`startTimeMs`、`cumFilledQty` 等）；
-- **Decimal 字段**：`totalQuantity`、`orderNotional`、`worstPrice`、`makerRateLimit`、`povLimit`、`povMinLimit`、`upTolerance`、`lowTolerance`、`limitPrice` 一律使用 `str` 传输，传入 `Decimal/int/float` 时 SDK 会统一序列化成字符串；
+- **Decimal 字段**：`totalQuantity`、`orderNotional`、`worstPrice`、`makerRateLimit`、`povLimit`、`povMinLimit`、`upTolerance`、`lowTolerance` 一律使用 `str` 传输，传入 `Decimal/int/float` 时 SDK 会统一序列化成字符串；
+- **价格控制**：V2 只使用 `worstPrice`；`limitPrice` / `limitPriceString` 属于 V1 字段，V2 SDK 不再暴露或透传；
+- **POV 上限默认值**：创建 V2 母单时未传 `povLimit`，TWAP/VWAP 默认 `1`，POV 默认 `0.05`；传入值必须在 `0-1` 范围内；
 - **时间**：`startTimeMs` epoch 毫秒（`int`），列表筛选 `startTime/endTime` 使用 RFC3339；
 - **隐藏字段**：母单不再返回 `apiKey/apiKeyName/limitPrice/algoStartTimeMs` 等内部字段，但会返回 `tradingAccount` 便于展示交易账户；子单不再返回 `fee/tradingAccount`；API Key 不再返回 `verificationMethod/balance`；
 - **重命名**：母单出参 `apiKeyUuid`、`cumFilledQty/cumFilledNotional/avgFilledPrice/worstPrice`，子单出参 `orderId`（取代 `subOrderId`）、`filledNotional`（取代 `filledValue`）、`baseCurrency/quoteCurrency`、`orderType`；
-- **状态枚举完整化**：`MasterOrderStatusV2` 包含 `NEW / WAITING / PROCESSING / PAUSED / CANCELLED / COMPLETED / REJECTED / EXPIRED`；
+- **状态枚举完整化**：`MasterOrderStatusV2` 包含 `NEW / WAITING / PROCESSING / PAUSED / CANCELLED / COMPLETED / COMPLETED_WITHTAIL / REJECTED / EXPIRED`；
 - **分页**：`pageSize` 上限 100，超过 100 会返回错误，不再静默裁剪。
 
 ### V2 方法清单（挂在 `User` 上）
@@ -171,7 +173,9 @@ client.cancel_master_order_v2(created.masterOrderId, reason="manual cleanup")
 
 更完整的样例见 [`examples/user/v2/`](examples/user/v2/)。
 
-## API 参考
+## API 参考（V1）
+
+以下接口和字段表属于 V1 SDK。V2 strategy-api 的方法、字段命名和响应模型见上文 “V2 接口（推荐用于新接入）”。
 
 ### 公共接口
 
@@ -258,7 +262,7 @@ except Exception as e:
 |--------|------|----------|------|
 | page | int | 否 | 页码 |
 | pageSize | int | 否 | 每页数量 |
-| exchange | str | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid |
+| exchange | str | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit |
 | marketType | str/TradingPairMarketType | 否 | 市场类型筛选，可选值：SPOT（现货）、FUTURES（合约） |
 | isCoin | bool | 否 | 是否查询币本位合约可用交易对。传 `true` 时返回币本位合约可用交易对，仅 Binance 可用 |
 
@@ -371,7 +375,7 @@ except Exception as e:
 |--------|------|----------|------|
 | page | int | 否 | 页码 |
 | pageSize | int | 否 | 每页数量 |
-| exchange | str | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid |
+| exchange | str | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit |
 
 **响应字段：**
 
@@ -381,7 +385,7 @@ except Exception as e:
 | ├─ id | string | API 记录的唯一标识 |
 | ├─ createdAt | string | API 添加时间 |
 | ├─ accountName | string | 账户名称（如：账户1、账户2） |
-| ├─ exchange | string | 交易所名称（如：Binance、OKX、LTP、Deribit、Hyperliquid） |
+| ├─ exchange | string | 交易所名称（如：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit） |
 | ├─ apiKey | string | 交易所 API Key（部分隐藏） |
 | ├─ verificationMethod | string | API 验证方式（如：OAuth、API） |
 | ├─ status | string | API 状态：正常、异常（不可用） |
@@ -434,7 +438,7 @@ apis = client.list_exchange_apis(
 | **基础参数** |
 | strategyType | string/StrategyType | 是    | 策略类型，可选值：TWAP-1、POV |
 | algorithm | string/Algorithm | 是    | 交易算法。strategyType=TWAP-1时，可选值：TWAP、VWAP；strategyType=POV时，可选值：POV |
-| exchange | string/Exchange | 是    | 交易所名称，可选值：Binance、OKX、LTP、Deribit、Hyperliquid |
+| exchange | string/Exchange | 是    | 交易所名称，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit |
 | symbol | string | 是    | 交易对符号（如：BTCUSDT）（可用交易对查询） |
 | marketType | string/MarketType | 是    | 可选值：SPOT（现货）、PERP（永续合约） |
 | side | string/OrderSide | 是    | 1.如果isTargetPosition=False：side代表交易方向，可选值：buy（买入）、sell（卖出）；合约交易时可与reduceOnly组合，reduceOnly=True时：buy代表买入平空，sell代表卖出平多。2.如果isTargetPosition=True：side代表仓位方向，可选值：buy（多头）、sell（空头）。【仅合约交易时需传入】 |
@@ -492,7 +496,7 @@ from qe.lib import Algorithm, Exchange, MarketType, OrderSide, StrategyType, Mar
 # TWAP 订单示例 - 使用枚举创建订单（推荐）
 response = client.create_master_order(
     algorithm=Algorithm.TWAP,                      # 使用算法枚举
-    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP、Exchange.DERIBIT、Exchange.HYPERLIQUID  # 使用交易所枚举（Binance、OKX、LTP、Deribit 或 Hyperliquid）
+    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP、Exchange.DERIBIT、Exchange.HYPERLIQUID、Exchange.BYBIT  # 使用交易所枚举（Binance、OKX、LTP、Deribit、Hyperliquid 或 Bybit）
     symbol="BTCUSDT",
     marketType=MarketType.SPOT,                    # 使用市场类型枚举
     side=OrderSide.BUY,                           # 使用订单方向枚举
@@ -522,7 +526,7 @@ else:
 # 目标仓位下单示例 - 买入 1.5 BTC 到目标仓位
 response = client.create_master_order(
     algorithm=Algorithm.TWAP,                      # 使用算法枚举
-    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP、Exchange.DERIBIT、Exchange.HYPERLIQUID  # 使用交易所枚举（Binance、OKX、LTP、Deribit 或 Hyperliquid）
+    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP、Exchange.DERIBIT、Exchange.HYPERLIQUID、Exchange.BYBIT  # 使用交易所枚举（Binance、OKX、LTP、Deribit、Hyperliquid 或 Bybit）
     symbol="BTCUSDT",
     marketType=MarketType.SPOT,                    # 使用市场类型枚举
     side=OrderSide.BUY,                           # 使用订单方向枚举
@@ -584,7 +588,7 @@ if response.get('success'):
 | page | int | 否 | 页码 |           
 | pageSize | int | 否 | 每页数量 |
 | status | string | 否 | 订单状态筛选，可选值：NEW（执行中）、COMPLETED（已完成） |
-| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid |
+| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit |
 | symbol | string | 否 | 交易对筛选 |
 | startTime | string | 否 | 开始时间筛选 |
 | endTime | string | 否 | 结束时间筛选 |
@@ -1750,6 +1754,7 @@ except KeyboardInterrupt:
 | LTP | LTP |
 | Deribit | Deribit |
 | Hyperliquid | Hyperliquid |
+| Bybit | Bybit |
 
 **保证金类型 (MarginType)：**
 
