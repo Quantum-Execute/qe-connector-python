@@ -100,7 +100,7 @@ V2 主要差异：
 - **POV 上限默认值**：创建 V2 母单时未传 `povLimit`，TWAP/VWAP 默认 `1`，POV 默认 `0.05`；传入值必须在 `0-1` 范围内；
 - **时间**：`startTimeMs` epoch 毫秒（`int`），列表筛选 `startTime/endTime` 使用 RFC3339；
 - **隐藏字段**：母单不再返回 `apiKey/apiKeyName/limitPrice/algoStartTimeMs` 等内部字段，但会返回 `tradingAccount` 便于展示交易账户；子单不再返回 `fee/tradingAccount`；API Key 不再返回 `verificationMethod/balance`；
-- **重命名**：母单出参 `apiKeyUuid`、`cumFilledQty/cumFilledNotional/avgFilledPrice/worstPrice`，子单出参 `orderId`（取代 `subOrderId`）、`filledNotional`（取代 `filledValue`）、`baseCurrency/quoteCurrency`、`orderType`；
+- **重命名**：母单出参 `apiKeyId`、`cumFilledQty/cumFilledNotional/avgFilledPrice/worstPrice`，子单出参 `orderId`（取代 `subOrderId`）、`filledNotional`（取代 `filledValue`）、`baseCurrency/quoteCurrency`、`orderType`；
 - **状态枚举完整化**：`MasterOrderStatusV2` 包含 `NEW / WAITING / PROCESSING / PAUSED / CANCELLED / COMPLETED / COMPLETED_WITHTAIL / REJECTED / EXPIRED`；
 - **分页**：`pageSize` 上限 100，超过 100 会返回错误，不再静默裁剪。
 

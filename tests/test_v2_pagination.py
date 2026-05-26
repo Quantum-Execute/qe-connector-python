@@ -3,6 +3,7 @@ import pytest
 from qe.lib.trading_v2_types import (
     MASTER_ORDER_STATUSES_V2,
     CreateMasterOrderV2Request,
+    ExchangeApiV2Info,
     UpdateMasterOrderV2Request,
     MasterOrderStatusV2,
     MasterOrderV2Info,
@@ -68,10 +69,36 @@ def test_v2_list_methods_reject_oversized_page_size():
 def test_master_order_v2_info_decodes_trading_account():
     info = MasterOrderV2Info.from_dict({
         "masterOrderId": "mo_account",
+        "apiKeyId": "binding-id",
         "tradingAccount": "pm-account",
     })
 
+    assert info.apiKeyId == "binding-id"
     assert info.tradingAccount == "pm-account"
+
+
+def test_v2_info_decoders_prefer_api_key_id_and_accept_legacy_aliases():
+    exchange = ExchangeApiV2Info.from_dict({
+        "apiKeyUuid": "legacy-binding",
+        "id": "old-id",
+    })
+    assert exchange.apiKeyId == "legacy-binding"
+    assert exchange.apiKeyUuid == "legacy-binding"
+    assert exchange.id == "old-id"
+
+    order = MasterOrderV2Info.from_dict({
+        "apiKeyUuid": "legacy-order-binding",
+        "masterOrderId": "mo_legacy",
+    })
+    assert order.apiKeyId == "legacy-order-binding"
+    assert order.apiKeyUuid == "legacy-order-binding"
+
+    current_exchange = ExchangeApiV2Info.from_dict({"apiKeyId": "binding-id"})
+    assert current_exchange.apiKeyUuid == "binding-id"
+    assert current_exchange.id == "binding-id"
+
+    current_order = MasterOrderV2Info.from_dict({"apiKeyId": "order-binding"})
+    assert current_order.apiKeyUuid == "order-binding"
 
 
 def test_master_order_status_v2_includes_completed_with_tail():
@@ -130,6 +157,18 @@ def test_create_master_order_v2_rejects_legacy_limit_price_from_request_payload(
         create_master_order_v2(client, request=LegacyRequest())
 
     assert client.json_calls == []
+
+
+def test_list_master_orders_v2_uses_api_key_id_and_accepts_legacy_filter_alias():
+    client = DummyClient()
+
+    list_master_orders_v2(client, apiKeyId="binding-id")
+    assert client.calls[-1][2]["apiKeyId"] == "binding-id"
+    assert "apiKeyUuid" not in client.calls[-1][2]
+
+    list_master_orders_v2(client, apiKeyUuid="legacy-binding")
+    assert client.calls[-1][2]["apiKeyId"] == "legacy-binding"
+    assert "apiKeyUuid" not in client.calls[-1][2]
 
 
 def test_create_master_order_v2_applies_algorithm_pov_limit_defaults():

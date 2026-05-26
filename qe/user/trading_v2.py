@@ -269,7 +269,7 @@ def list_master_orders_v2(self, **kwargs):
         exchange (str, optional): Filter by exchange.
         symbol (str, optional): Filter by trading pair.
         algorithm (str, optional): TWAP / VWAP / POV.
-        apiKeyUuid (str, optional): Filter by API Key binding ID.
+        apiKeyId (str, optional): Filter by API Key binding ID.
         startTime (str, optional): RFC3339/ISO 8601 lower bound.
         endTime (str, optional): RFC3339/ISO 8601 upper bound.
         masterOrderId (str, optional): Exact filter by master order ID.
@@ -280,6 +280,8 @@ def list_master_orders_v2(self, **kwargs):
         :meth:`MasterOrderListV2Reply.from_dict` for typed access.
     """
     _normalize_pagination_kwargs(kwargs)
+    if "apiKeyUuid" in kwargs and "apiKeyId" not in kwargs:
+        kwargs["apiKeyId"] = kwargs.pop("apiKeyUuid")
     _check_page_size(kwargs.get("pageSize"))
     if "status" in kwargs:
         kwargs["status"] = _coerce_enum(kwargs["status"])

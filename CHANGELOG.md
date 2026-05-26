@@ -65,7 +65,7 @@
 
 ### 隐藏字段说明（V2）
 - 子单：不再返回 `fee`、`tradingAccount`；`subOrderId` → `orderId`，`filledValue` → `filledNotional`。
-- 母单：不再返回 `id`、`userUid`、`apiKey`、`accountType`、`limitPrice/limitPriceString`、`takemakefeediff`、`algoStartTimeMs`、`completionProgress` 等内部字段；`apiKeyUuid` 取代 `apiKeyId/apiKey`，`cumFilledQty/cumFilledNotional/avgFilledPrice` 取代旧的 `filledQuantity/filledNotional/averagePrice`，`worstPrice` 取代 `limitPrice`。
+- 母单：不再返回 `id`、`userUid`、`apiKey`、`accountType`、`limitPrice/limitPriceString`、`takemakefeediff`、`algoStartTimeMs`、`completionProgress` 等内部字段；API Key 绑定 ID 统一使用 `apiKeyId`，`cumFilledQty/cumFilledNotional/avgFilledPrice` 取代旧的 `filledQuantity/filledNotional/averagePrice`，`worstPrice` 取代 `limitPrice`。
 - API Key：不再返回 `verificationMethod`、`balance`。
 
 ## 1.0.27 - 2026-04-12

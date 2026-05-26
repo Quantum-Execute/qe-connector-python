@@ -114,6 +114,9 @@ def _drop_none(d: Mapping[str, Any]) -> Dict[str, Any]:
 class ExchangeApiV2Info:
     """Single API Key binding row returned by V2 ``GET /exchange-apis``."""
 
+    apiKeyId: Optional[str] = None
+    # Deprecated response aliases kept for SDK source compatibility.
+    apiKeyUuid: Optional[str] = None
     id: Optional[str] = None
     createdAt: Optional[str] = None
     accountName: Optional[str] = None
@@ -127,7 +130,14 @@ class ExchangeApiV2Info:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "ExchangeApiV2Info":
-        return cls(**{k: data.get(k) for k in _field_names(cls)})
+        payload = dict(data)
+        if payload.get("apiKeyId") is None:
+            payload["apiKeyId"] = payload.get("apiKeyUuid") or payload.get("id")
+        if payload.get("apiKeyUuid") is None:
+            payload["apiKeyUuid"] = payload.get("apiKeyId")
+        if payload.get("id") is None:
+            payload["id"] = payload.get("apiKeyId")
+        return cls(**{k: payload.get(k) for k in _field_names(cls)})
 
 
 @dataclass
@@ -241,6 +251,8 @@ class MasterOrderV2Info:
     updatedAt: Optional[str] = None
     masterOrderId: Optional[str] = None
     clientOrderId: Optional[str] = None
+    apiKeyId: Optional[str] = None
+    # Deprecated response alias kept for SDK source compatibility.
     apiKeyUuid: Optional[str] = None
     tradingAccount: Optional[str] = None
     exchange: Optional[str] = None
@@ -282,11 +294,16 @@ class MasterOrderV2Info:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "MasterOrderV2Info":
+        payload = dict(data)
+        if payload.get("apiKeyId") is None:
+            payload["apiKeyId"] = payload.get("apiKeyUuid")
+        if payload.get("apiKeyUuid") is None:
+            payload["apiKeyUuid"] = payload.get("apiKeyId")
         names = _field_names(cls)
         kwargs: Dict[str, Any] = {}
         for name in names:
-            if name in data:
-                kwargs[name] = data[name]
+            if name in payload:
+                kwargs[name] = payload[name]
         # Normalise epoch-millis fields that may come back as numeric/string.
         for ms_field in ("startTimeMs", "finishedMs", "executionDurationSeconds"):
             if kwargs.get(ms_field) is not None:
