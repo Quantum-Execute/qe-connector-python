@@ -26,6 +26,7 @@ from qe.lib.utils import check_required_parameters
 
 _BASE_PATH = "/user/trading/v2/master-orders"
 _FILLS_PATH = "/user/trading/v2/order-fills"
+_TCA_PATH = "/user/trading/v2/tca-analysis"
 
 
 # Decimal-shaped fields accepted via **kwargs in create_master_order_v2.
@@ -336,6 +337,33 @@ def list_order_fills_v2(self, **kwargs):
     _normalize_pagination_kwargs(kwargs)
     _check_page_size(kwargs.get("pageSize"))
     return self.sign_request("GET", _FILLS_PATH, {**kwargs})
+
+
+# ---------------------------------------------------------------------------
+# TCA analysis
+# ---------------------------------------------------------------------------
+
+
+def get_tca_analysis_v2(self, **kwargs):
+    """Get V2 TCA analysis data.
+
+    ``GET /strategy-api/user/trading/v2/tca-analysis``
+
+    Keyword Args:
+        symbol (str, optional): Trading symbol filter.
+        category (str, optional): Trading category: spot, perp, or perp_cm.
+        strategy (str, optional): Execution algorithm filter: TWAP, VWAP, or POV.
+        apiKeyId (str, optional): API Key binding ID filter.
+        startTime (int, optional): Start time in epoch milliseconds.
+        endTime (int, optional): End time in epoch milliseconds.
+        recvWindow (int, optional): Max 60000.
+
+    Returns:
+        list[dict]: TCA rows returned directly from the response ``message``.
+    """
+    if "apiKeyUuid" in kwargs and "apiKeyId" not in kwargs:
+        kwargs["apiKeyId"] = kwargs.pop("apiKeyUuid")
+    return self.sign_request("GET", _TCA_PATH, {**kwargs})
 
 
 # ---------------------------------------------------------------------------

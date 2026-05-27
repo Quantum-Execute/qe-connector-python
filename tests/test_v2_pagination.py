@@ -11,6 +11,7 @@ from qe.lib.trading_v2_types import (
 from qe.user.exchange_v2 import list_exchange_apis_v2
 from qe.user.trading_v2 import (
     create_master_order_v2,
+    get_tca_analysis_v2,
     list_master_orders_v2,
     list_order_fills_v2,
     update_master_order_v2,
@@ -169,6 +170,40 @@ def test_list_master_orders_v2_uses_api_key_id_and_accepts_legacy_filter_alias()
     list_master_orders_v2(client, apiKeyUuid="legacy-binding")
     assert client.calls[-1][2]["apiKeyId"] == "legacy-binding"
     assert "apiKeyUuid" not in client.calls[-1][2]
+
+
+def test_get_tca_analysis_v2_uses_v2_path_and_query_keys():
+    client = DummyClient()
+
+    get_tca_analysis_v2(
+        client,
+        symbol="BTCUSDT",
+        category="perp",
+        strategy="TWAP",
+        apiKeyId="binding-id",
+        startTime=1735372000000,
+        endTime=1735458400000,
+    )
+
+    method, path, payload = client.calls[-1]
+    assert method == "GET"
+    assert path == "/user/trading/v2/tca-analysis"
+    assert payload["symbol"] == "BTCUSDT"
+    assert payload["category"] == "perp"
+    assert payload["strategy"] == "TWAP"
+    assert payload["apiKeyId"] == "binding-id"
+    assert payload["startTime"] == 1735372000000
+    assert payload["endTime"] == 1735458400000
+
+
+def test_get_tca_analysis_v2_accepts_legacy_api_key_alias():
+    client = DummyClient()
+
+    get_tca_analysis_v2(client, apiKeyUuid="legacy-binding")
+
+    payload = client.calls[-1][2]
+    assert payload["apiKeyId"] == "legacy-binding"
+    assert "apiKeyUuid" not in payload
 
 
 def test_create_master_order_v2_applies_algorithm_pov_limit_defaults():

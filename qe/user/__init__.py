@@ -28,6 +28,7 @@ class User(API):
     from qe.user.trading_v2 import get_master_order_v2
     from qe.user.trading_v2 import get_master_order_by_client_order_id_v2
     from qe.user.trading_v2 import list_order_fills_v2
+    from qe.user.trading_v2 import get_tca_analysis_v2
     from qe.user.trading_v2 import cancel_master_order_v2
     from qe.user.trading_v2 import pause_master_order_v2
     from qe.user.trading_v2 import resume_master_order_v2
