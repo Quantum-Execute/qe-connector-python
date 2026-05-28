@@ -1173,16 +1173,16 @@ response = client.update_master_order_params(
 **示例代码：**
 
 ```python
-# 创建 ListenKey
-result = client.create_listen_key()
+# 创建 V2 ListenKey
+result = client.create_listen_key_v2()
 
 if result.get('success'):
     print(f"ListenKey创建成功:")
     print(f"ListenKey: {result['listenKey']}")
     print(f"过期时间: {result['expireAt']}")
     
-    # 使用 ListenKey 建立 WebSocket 连接
-    # ws_url = f"wss://api.quantumexecute.com/ws/{result['listenKey']}"
+    # SDK WebSocketService 默认连接 /api/ws/v2
+    # ws_service.connect(result["listenKey"])
 else:
     print(f"ListenKey创建失败：{result.get('message')}")
 ```
@@ -1378,8 +1378,8 @@ class ListenKeyManager:
         self.expire_at = None
     
     def create_listen_key(self):
-        """创建或刷新 ListenKey"""
-        result = self.client.create_listen_key()
+        """创建或刷新 V2 ListenKey"""
+        result = self.client.create_listen_key_v2()
         
         if not result.get('success'):
             raise Exception(f"创建 ListenKey 失败: {result.get('message')}")
@@ -1516,8 +1516,8 @@ def main():
     ws_service.set_pong_timeout(10.0)    # Pong超时10秒
     
     try:
-        # 获取listen_key
-        listen_key_result = api.create_listen_key()
+        # 获取 V2 listen_key
+        listen_key_result = api.create_listen_key_v2()
         if not listen_key_result.get('success'):
             logger.error(f"创建ListenKey失败: {listen_key_result.get('message')}")
             return
@@ -1643,8 +1643,8 @@ class TradingBot:
         
     def start_websocket(self):
         """启动WebSocket连接"""
-        # 创建ListenKey
-        result = self.api.create_listen_key()
+        # 创建 V2 ListenKey
+        result = self.api.create_listen_key_v2()
         if not result.get('success'):
             raise Exception(f"创建ListenKey失败: {result.get('message')}")
         
@@ -1810,7 +1810,7 @@ pairs = pub_client.trading_pairs(marketType="SPOT")
 ### 7. WebSocket 相关说明
 
 **WebSocket 连接地址：**
-- `wss://test.quantumexecute.com/api/ws?listen_key={listenKey}`
+- `wss://test.quantumexecute.com/api/ws/v2?listen_key={listenKey}`
 
 **支持的消息类型：**
 - 主订单状态更新（`master_order`）
@@ -1857,8 +1857,8 @@ handlers = WebSocketEventHandlers(
 
 ws_service.set_handlers(handlers)
 
-# 获取ListenKey并连接
-listen_key = api.create_listen_key()['listenKey']
+# 获取 V2 ListenKey 并连接
+listen_key = api.create_listen_key_v2()['listenKey']
 ws_service.connect(listen_key)
 
 # 保持连接

@@ -17,9 +17,10 @@ api_key, api_secret,api_key_id = get_api_key()
 client = Client(api_key, api_secret)
 
 try:
-    # Get user new listen key
-    response = client.create_listen_key()
-    logger.info(f"Total master orders: {response.get('total', 0)}")
+    # Get user V2 listen key for /api/ws/v2.
+    response = client.create_listen_key_v2()
+    logger.info(f"ListenKey: {response.get('listenKey')}")
+    logger.info(f"Expire at: {response.get('expireAt')}")
 
 except APIError as error:
     logger.error(

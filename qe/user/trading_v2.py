@@ -27,6 +27,7 @@ from qe.lib.utils import check_required_parameters
 _BASE_PATH = "/user/trading/v2/master-orders"
 _FILLS_PATH = "/user/trading/v2/order-fills"
 _TCA_PATH = "/user/trading/v2/tca-analysis"
+_LISTEN_KEY_PATH = "/user/trading/v2/listen-key"
 
 
 # Decimal-shaped fields accepted via **kwargs in create_master_order_v2.
@@ -364,6 +365,14 @@ def get_tca_analysis_v2(self, **kwargs):
     if "apiKeyUuid" in kwargs and "apiKeyId" not in kwargs:
         kwargs["apiKeyId"] = kwargs.pop("apiKeyUuid")
     return self.sign_request("GET", _TCA_PATH, {**kwargs})
+
+
+def create_listen_key_v2(self, **kwargs):
+    """Create a listenKey for the V2 WebSocket route.
+
+    ``POST /strategy-api/user/trading/v2/listen-key``
+    """
+    return self.sign_request("POST", _LISTEN_KEY_PATH, kwargs or {})
 
 
 # ---------------------------------------------------------------------------

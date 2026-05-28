@@ -26,9 +26,10 @@ from ..error import WebsocketClientError
 class WebSocketService:
     """WebSocket服务"""
     
-    def __init__(self, client, base_url: str = "wss://test.quantumexecute.com"):
+    def __init__(self, client, base_url: str = "wss://test.quantumexecute.com", version: str = "v2"):
         self.client = client
         self.base_url = base_url
+        self.version = version
         self.listen_key: Optional[str] = None
         self.websocket: Optional[websockets.WebSocketServerProtocol] = None
         self.handlers = WebSocketEventHandlers()
@@ -110,7 +111,8 @@ class WebSocketService:
     
     def _get_websocket_url(self) -> str:
         """获取WebSocket URL"""
-        return f"{self.base_url}/api/ws?listen_key={self.listen_key}"
+        path = "/api/ws/v2" if self.version == "v2" else "/api/ws"
+        return f"{self.base_url}{path}?listen_key={self.listen_key}"
     
     async def _read_messages(self):
         """读取消息"""
