@@ -263,7 +263,7 @@ except Exception as e:
 | page | int | 否 | 页码 |
 | pageSize | int | 否 | 每页数量 |
 | exchange | str | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit |
-| marketType | str/TradingPairMarketType | 否 | 市场类型筛选，可选值：SPOT（现货）、FUTURES（合约） |
+| marketType | str/TradingPairMarketType | 否 | 市场类型筛选，可选值：SPOT（现货）、PERP（永续合约） |
 | isCoin | bool | 否 | 是否查询币本位合约可用交易对。传 `true` 时返回币本位合约可用交易对，仅 Binance 可用 |
 
 **响应字段：**
@@ -276,7 +276,7 @@ except Exception as e:
 | ├─ baseAsset | string | 基础币种（如：BTC） |
 | ├─ quoteAsset | string | 计价币种（如：USDT） |
 | ├─ exchange | string | 交易所名称 |
-| ├─ marketType | string | 市场类型（SPOT/FUTURES） |
+| ├─ marketType | string | 市场类型（SPOT/PERP） |
 | ├─ contractType | string | 合约类型（仅合约交易对） |
 | ├─ deliveryDate | string | 交割日期（仅合约交易对） |
 | ├─ status | string | 交易对状态 |
@@ -314,7 +314,7 @@ try:
         """)
         
         # 如果是合约交易对，显示额外信息
-        if pair['marketType'] == 'FUTURES':
+        if pair['marketType'] == 'PERP':
             print(f"    合约类型: {pair.get('contractType', 'N/A')}")
             if pair.get('deliveryDate'):
                 print(f"    交割日期: {pair['deliveryDate']}")
@@ -334,12 +334,12 @@ try:
     print(f"币安现货交易对数量: {len(spot_pairs.get('items', []))}")
     
     # 获取合约交易对
-    futures_pairs = pub_client.trading_pairs(
-        marketType=TradingPairMarketType.FUTURES,  # 使用枚举
+    perp_pairs = pub_client.trading_pairs(
+        marketType=TradingPairMarketType.PERP,  # 使用枚举
         page=1,
         pageSize=20
     )
-    print(f"合约交易对数量: {len(futures_pairs.get('items', []))}")
+    print(f"合约交易对数量: {len(perp_pairs.get('items', []))}")
     
     # 获取币本位合约可用交易对（仅 Binance）
     coin_pairs = pub_client.trading_pairs(isCoin=True)
@@ -1775,7 +1775,7 @@ except KeyboardInterrupt:
 | 枚举值 | 描述 |
 |--------|------|
 | SPOT | 现货品种 |
-| FUTURES | 期货品种 |
+| PERP | 永续合约品种 |
 
 ### 5. 公共接口使用说明
 

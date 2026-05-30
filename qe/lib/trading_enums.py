@@ -60,5 +60,6 @@ class Category(str, Enum):
 
 class TradingPairMarketType(str, Enum):
     """交易对市场类型枚举"""
-    FUTURES = "FUTURES"  # 期货品种
     SPOT = "SPOT"        # 现货品种
+    PERP = "PERP"        # 永续合约品种
+    FUTURES = "PERP"     # 兼容旧名称，发送值统一为 PERP

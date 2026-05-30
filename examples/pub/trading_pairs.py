@@ -35,9 +35,9 @@ try:
     response = client.trading_pairs(marketType=TradingPairMarketType.SPOT)
     logger.info(f"Spot trading pairs (enum): {len(response.get('items', []))}")
     
-    # Filter by futures market type using enum
-    response = client.trading_pairs(marketType=TradingPairMarketType.FUTURES)
-    logger.info(f"Futures trading pairs (enum): {len(response.get('items', []))}")
+    # Filter by perpetual market type using enum
+    response = client.trading_pairs(marketType=TradingPairMarketType.PERP)
+    logger.info(f"Perp trading pairs (enum): {len(response.get('items', []))}")
     
     # Filter by coin type
     response = client.trading_pairs(isCoin=True)
