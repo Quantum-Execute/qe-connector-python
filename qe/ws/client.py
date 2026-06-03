@@ -6,6 +6,7 @@ import json
 import logging
 import threading
 import time
+from concurrent.futures import TimeoutError
 from typing import Optional, Dict, Any
 import websockets
 from websockets.exceptions import ConnectionClosed, WebSocketException
@@ -40,6 +41,7 @@ class WebSocketService:
         self._pong_timeout = 10.0
         self._stop_event = threading.Event()
         self._threads = []
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
         self._logger = logging.getLogger(__name__)
     
     def set_handlers(self, handlers: WebSocketEventHandlers) -> 'WebSocketService':
@@ -62,9 +64,14 @@ class WebSocketService:
         """运行异步连接"""
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
+        with self._lock:
+            self._loop = loop
         try:
             loop.run_until_complete(self._async_connect())
         finally:
+            with self._lock:
+                if self._loop is loop:
+                    self._loop = None
             loop.close()
     
     async def _async_connect(self):
@@ -192,28 +199,9 @@ class WebSocketService:
             elif client_msg.type == ClientMessageType.MASTER_DATA.value:
                 # 母单详细数据 - 解析JSON数据
                 try:
-                    master_order_data = json.loads(client_msg.data)
+                    master_order_data = self._parse_payload_data(client_msg.data)
                     if self.handlers.on_master_order:
-                        # 构造MasterOrderMessage，使用默认值填充缺失字段
-                        master_order = MasterOrderMessage(
-                            type=master_order_data.get("type", "master_order"),
-                            master_order_id=master_order_data.get("master_order_id", ""),
-                            client_id=master_order_data.get("client_id", ""),
-                            strategy=master_order_data.get("strategy", ""),
-                            symbol=master_order_data.get("symbol", ""),
-                            side=master_order_data.get("side", ""),
-                            qty=master_order_data.get("qty", 0.0),
-                            duration_secs=master_order_data.get("duration_secs", 0.0),
-                            category=master_order_data.get("category", ""),
-                            action=master_order_data.get("action", ""),
-                            reduce_only=master_order_data.get("reduce_only", False),
-                            status=master_order_data.get("status", ""),
-                            date=master_order_data.get("date", 0.0),
-                            ticktime_int=master_order_data.get("ticktime_int", 0),
-                            ticktime_ms=master_order_data.get("ticktime_ms", 0),
-                            reason=master_order_data.get("reason", ""),
-                            timestamp=master_order_data.get("timestamp", 0)
-                        )
+                        master_order = self._build_master_order_message(master_order_data)
                         self.handlers.on_master_order(master_order)
                 
                 except json.JSONDecodeError as e:
@@ -228,31 +216,9 @@ class WebSocketService:
             elif client_msg.type == ClientMessageType.ORDER_DATA.value:
                 # 订单详细数据 - 解析JSON数据
                 try:
-                    order_data = json.loads(client_msg.data)
+                    order_data = self._parse_payload_data(client_msg.data)
                     if self.handlers.on_order:
-                        # 构造OrderMessage，使用默认值填充缺失字段
-                        order = OrderMessage(
-                            type=order_data.get("type", "order"),
-                            master_order_id=order_data.get("master_order_id", ""),
-                            order_id=order_data.get("order_id", ""),
-                            symbol=order_data.get("symbol", ""),
-                            category=order_data.get("category", ""),
-                            side=order_data.get("side", ""),
-                            price=order_data.get("price", 0.0),
-                            quantity=order_data.get("quantity", 0.0),
-                            status=order_data.get("status", ""),
-                            created_time=order_data.get("created_time", 0),
-                            fill_qty=order_data.get("fill_qty", 0.0),
-                            fill_price=order_data.get("fill_price", 0.0),
-                            cum_filled_qty=order_data.get("cum_filled_qty", 0.0),
-                            quantity_remaining=order_data.get("quantity_remaining", 0.0),
-                            ack_time=order_data.get("ack_time", 0),
-                            last_fill_time=order_data.get("last_fill_time", 0),
-                            cancel_time=order_data.get("cancel_time", 0),
-                            price_type=order_data.get("price_type", ""),
-                            reason=order_data.get("reason", ""),
-                            timestamp=order_data.get("timestamp", 0)
-                        )
+                        order = self._build_order_message(order_data)
                         self.handlers.on_order(order)
                 
                 except json.JSONDecodeError as e:
@@ -271,6 +237,105 @@ class WebSocketService:
                     self.handlers.on_error(e)
                 except Exception as handler_error:
                     self._logger.error(f"Error handler error: {handler_error}")
+
+    @staticmethod
+    def _parse_payload_data(payload: Any) -> Dict[str, Any]:
+        """Parse the envelope data field, accepting either a JSON string or dict."""
+        if isinstance(payload, dict):
+            return payload
+        if payload in (None, ""):
+            return {}
+        return json.loads(payload)
+
+    @staticmethod
+    def _get_any(data: Dict[str, Any], *keys: str, default: Any = None) -> Any:
+        for key in keys:
+            value = data.get(key)
+            if value is not None:
+                return value
+        return default
+
+    @classmethod
+    def _to_float(cls, value: Any, default: float = 0.0) -> float:
+        if value in (None, ""):
+            return default
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return default
+
+    @classmethod
+    def _to_int(cls, value: Any, default: int = 0) -> int:
+        if value in (None, ""):
+            return default
+        try:
+            return int(float(value))
+        except (TypeError, ValueError):
+            return default
+
+    @staticmethod
+    def _to_bool(value: Any, default: bool = False) -> bool:
+        if value is None:
+            return default
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.strip().lower() in {"1", "true", "yes", "y"}
+        return bool(value)
+
+    @classmethod
+    def _build_master_order_message(cls, data: Dict[str, Any]) -> MasterOrderMessage:
+        return MasterOrderMessage(
+            type=cls._get_any(data, "type", default="master_order"),
+            master_order_id=cls._get_any(data, "master_order_id", "masterOrderId", default=""),
+            client_id=cls._get_any(data, "client_id", "clientId", "clientOrderId", default=""),
+            strategy=cls._get_any(data, "strategy", "algorithm", default=""),
+            symbol=cls._get_any(data, "symbol", default=""),
+            side=cls._get_any(data, "side", default=""),
+            qty=cls._to_float(cls._get_any(data, "qty", "totalQuantity", default=0.0)),
+            duration_secs=cls._to_float(
+                cls._get_any(data, "duration_secs", "durationSecs", "executionDurationSeconds", default=0.0)
+            ),
+            category=cls._get_any(data, "category", "marketType", default=""),
+            action=cls._get_any(data, "action", default=""),
+            reduce_only=cls._to_bool(cls._get_any(data, "reduce_only", "reduceOnly", default=False)),
+            status=cls._get_any(data, "status", default=""),
+            date=cls._to_float(cls._get_any(data, "date", default=0.0)),
+            ticktime_int=cls._to_int(cls._get_any(data, "ticktime_int", "ticktimeInt", default=0)),
+            ticktime_ms=cls._to_int(cls._get_any(data, "ticktime_ms", "ticktimeMs", default=0)),
+            reason=cls._get_any(data, "reason", "rejectReason", default=""),
+            timestamp=cls._to_int(cls._get_any(data, "timestamp", default=0)),
+        )
+
+    @classmethod
+    def _build_order_message(cls, data: Dict[str, Any]) -> OrderMessage:
+        filled_quantity = cls._get_any(data, "fill_qty", "fillQty", "filledQuantity", "filledQty", default=0.0)
+        average_price = cls._get_any(data, "fill_price", "fillPrice", "averagePrice", "avgPrice", default=0.0)
+
+        return OrderMessage(
+            type=cls._get_any(data, "type", default="order"),
+            master_order_id=cls._get_any(data, "master_order_id", "masterOrderId", default=""),
+            order_id=cls._get_any(data, "order_id", "orderId", "id", default=""),
+            symbol=cls._get_any(data, "symbol", default=""),
+            category=cls._get_any(data, "category", "marketType", default=""),
+            side=cls._get_any(data, "side", default=""),
+            price=cls._to_float(cls._get_any(data, "price", default=0.0)),
+            quantity=cls._to_float(cls._get_any(data, "quantity", default=0.0)),
+            status=cls._get_any(data, "status", default=""),
+            created_time=cls._to_int(cls._get_any(data, "created_time", "createdTime", "orderCreatedTime", default=0)),
+            fill_qty=cls._to_float(filled_quantity),
+            fill_price=cls._to_float(average_price),
+            cum_filled_qty=cls._to_float(cls._get_any(data, "cum_filled_qty", "cumFilledQty", default=filled_quantity)),
+            quantity_remaining=cls._to_float(
+                cls._get_any(data, "quantity_remaining", "quantityRemaining", default=0.0)
+            ),
+            ack_time=cls._to_int(cls._get_any(data, "ack_time", "ackTime", default=0)),
+            last_fill_time=cls._to_int(cls._get_any(data, "last_fill_time", "lastFillTime", "fillTime", default=0)),
+            cancel_time=cls._to_int(cls._get_any(data, "cancel_time", "cancelTime", default=0)),
+            price_type=cls._get_any(data, "price_type", "priceType", "orderType", default=""),
+            reason=cls._get_any(data, "reason", "rejectReason", default=""),
+            timestamp=cls._to_int(cls._get_any(data, "timestamp", default=0)),
+        )
     
     def _handle_disconnect(self):
         """处理断开连接"""
@@ -304,45 +369,49 @@ class WebSocketService:
     def close(self):
         """关闭连接"""
         self._stop_event.set()
-        
+
+        websocket = None
+        loop = None
         with self._lock:
-            if self.websocket:
-                # 直接关闭连接，不创建新的事件循环
-                try:
-                    # 如果WebSocket还在运行，直接关闭
-                    if hasattr(self.websocket, 'close') and not getattr(self.websocket, 'closed', False):
-                        # 使用线程安全的方式关闭
-                        import threading
-                        def close_websocket():
-                            try:
-                                # 在WebSocket的原始事件循环中关闭
-                                if hasattr(self.websocket, '_loop') and self.websocket._loop.is_running():
-                                    asyncio.run_coroutine_threadsafe(self.websocket.close(), self.websocket._loop)
-                                else:
-                                    # 如果原始循环已停止，创建新循环
-                                    loop = asyncio.new_event_loop()
-                                    asyncio.set_event_loop(loop)
-                                    try:
-                                        loop.run_until_complete(self.websocket.close())
-                                    finally:
-                                        loop.close()
-                            except Exception as e:
-                                self._logger.warning(f"Error closing websocket: {e}")
-                        
-                        close_thread = threading.Thread(target=close_websocket, daemon=True)
-                        close_thread.start()
-                        close_thread.join(timeout=2)  # 最多等待2秒
-                except Exception as e:
-                    self._logger.warning(f"Error in websocket close: {e}")
-                finally:
-                    self.websocket = None
+            websocket = self.websocket
+            loop = self._loop or getattr(websocket, "_loop", None) or getattr(websocket, "loop", None)
             self._is_connected = False
-        
+
+        if websocket and hasattr(websocket, "close") and not getattr(websocket, "closed", False):
+            self._close_websocket_on_loop(websocket, loop)
+
+        with self._lock:
+            if self.websocket is websocket:
+                self.websocket = None
+
         # 等待所有线程结束
+        current_thread = threading.current_thread()
         for thread in self._threads:
-            if thread.is_alive():
+            if thread is not current_thread and thread.is_alive():
                 thread.join(timeout=5)
         self._threads.clear()
+
+    def _close_websocket_on_loop(self, websocket: Any, loop: Optional[asyncio.AbstractEventLoop]) -> None:
+        """Schedule websocket.close() on the loop that owns the connection."""
+        if loop and loop.is_running():
+            try:
+                running_loop = asyncio.get_running_loop()
+            except RuntimeError:
+                running_loop = None
+
+            try:
+                if running_loop is loop:
+                    loop.create_task(websocket.close())
+                else:
+                    future = asyncio.run_coroutine_threadsafe(websocket.close(), loop)
+                    future.result(timeout=5)
+            except TimeoutError:
+                self._logger.warning("Timed out closing websocket")
+            except Exception as e:
+                self._logger.warning(f"Error closing websocket: {e}")
+            return
+
+        self._logger.debug("WebSocket event loop is not running; skipping async close")
     
     def is_connected(self) -> bool:
         """是否已连接"""
