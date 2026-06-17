@@ -250,6 +250,35 @@ def test_create_master_order_v2_rejects_pov_limit_above_one():
     assert client.json_calls == []
 
 
+def test_create_master_order_v2_allows_bybit_target_position_payload():
+    client = DummyClient()
+
+    create_master_order_v2(
+        client,
+        apiKeyId="bybit-api-key-id",
+        exchange="Bybit",
+        marketType="PERP",
+        symbol="BTCUSDT",
+        side="buy",
+        algorithm="TWAP",
+        executionDurationSeconds=600,
+        totalQuantity="0",
+        marginType="U",
+        isTargetPosition=True,
+    )
+
+    method, path, body, query = client.json_calls[-1]
+    assert method == "POST"
+    assert path == "/user/trading/v2/master-orders"
+    assert query == {}
+    assert body["exchange"] == "Bybit"
+    assert body["marketType"] == "PERP"
+    assert body["marginType"] == "U"
+    assert body["totalQuantity"] == "0"
+    assert "orderNotional" not in body
+    assert body["isTargetPosition"] is True
+
+
 def test_update_master_order_v2_rejects_legacy_limit_price_kwargs():
     client = DummyClient()
 

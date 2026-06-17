@@ -2,11 +2,12 @@
 
 本文件记录 `qe-connector`（Python SDK）的用户可见变更。
 
-## 1.2.0 - 2026-05-23
+## 1.3.1 - 2026-06-17
 
 ### 新增
 
 - **Bybit 支持**：`Exchange` 枚举新增 `BYBIT = "Bybit"`，V2 交易所校验白名单同步允许 `Bybit`。
+- **Bybit 目标仓位下单说明**：V2 创建母单支持 `exchange="Bybit"` 搭配 `isTargetPosition=True`；数量规则与其它交易所一致，目标仓位模式必须传 `totalQuantity`，且不可传 `orderNotional`。
 
 ## 1.1.1 - 2026-05-11
 

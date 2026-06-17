@@ -102,6 +102,7 @@ V2 主要差异：
 - **隐藏字段**：母单不再返回 `apiKey/apiKeyName/limitPrice/algoStartTimeMs` 等内部字段，但会返回 `tradingAccount` 便于展示交易账户；子单不再返回 `fee/tradingAccount`；API Key 不再返回 `verificationMethod/balance`；
 - **重命名**：母单出参 `apiKeyId`、`cumFilledQty/cumFilledNotional/avgFilledPrice/worstPrice`，子单出参 `orderId`（取代 `subOrderId`）、`filledNotional`（取代 `filledValue`）、`baseCurrency/quoteCurrency`、`orderType`；
 - **状态枚举完整化**：`MasterOrderStatusV2` 包含 `NEW / WAITING / PROCESSING / PAUSED / CANCELLED / COMPLETED / COMPLETED_WITHTAIL / REJECTED / EXPIRED`；
+- **Bybit 下单能力**：`Exchange.BYBIT` 可用于 V2 创建母单，支持普通下单与目标仓位模式；目标仓位模式下仍必须传 `totalQuantity`，且不可传 `orderNotional`；
 - **分页**：`pageSize` 上限 100，超过 100 会返回错误，不再静默裁剪。
 
 ### V2 方法清单（挂在 `User` 上）
