@@ -9,4 +9,4 @@ class Pub(API):
 
     # PUBLIC
     from qe.pub.trading import trading_pairs
-
+    from qe.pub.trading import trading_pairs_v2

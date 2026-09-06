@@ -49,13 +49,14 @@ class Exchange(str, Enum):
     DERIBIT = "Deribit"  # Deribit
     HYPERLIQUID = "Hyperliquid"  # Hyperliquid
     BYBIT = "Bybit"  # Bybit
+    BITGET = "Bitget"  # Bitget
 
 
 class Category(str, Enum):
     """币对品种枚举（与市场类型对应）"""
     SPOT = "spot"  # 现货品种
     PERP = "perp"  # 合约品种
-    PERP_CM = "perp_cm"  # 币本位合约品种（仅币安可用）
+    PERP_CM = "perp_cm"  # 币本位合约品种
 
 
 class TradingPairMarketType(str, Enum):

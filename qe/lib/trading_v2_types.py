@@ -66,7 +66,9 @@ MASTER_ORDER_STATUSES_V2 = frozenset(s.value for s in MasterOrderStatusV2)
 _MARKET_TYPES = frozenset({"SPOT", "PERP"})
 
 # 创建/查询母单时允许的交易所。V2 文档第 2 节定义。
-_EXCHANGES = frozenset({"Binance", "OKX", "LTP", "Deribit", "Hyperliquid", "Bybit"})
+_EXCHANGES = frozenset(
+    {"Binance", "OKX", "LTP", "Deribit", "Hyperliquid", "Bybit", "Bitget"}
+)
 
 # V2 文档默认 pageSize 上限；>100 会被 V2 接口明确拒绝。
 PAGE_SIZE_MAX = 100

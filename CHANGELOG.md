@@ -2,6 +2,21 @@
 
 本文件记录 `qe-connector`（Python SDK）的用户可见变更。
 
+## Unreleased
+
+### 新增
+
+- **Bitget 支持**：`Exchange` 新增 `BITGET = "Bitget"`，V1/V2 母单保持现有
+  `marketType` / `marginType` / `isMargin` / `isTargetPosition` 请求字段并支持 Bitget；
+  币本位 symbol 形如 `BTCUSD_CM`。
+- **V2 交易对查询**：新增 `Pub.trading_pairs_v2()`，请求
+  `GET /pub/v2/trading-pairs`，支持 `exchange` / `marketType` / `isCoin` 筛选；
+  Bitget V1/V2 都读取 `/file/trading-pair/upload` 发布的同一份快照。
+
+### 修复
+
+- `Pub.trading_pairs()` 现会将 `Exchange` 枚举序列化为后端需要的字符串值。
+
 ## 1.3.1 - 2026-06-17
 
 ### 新增

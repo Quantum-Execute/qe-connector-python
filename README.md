@@ -70,7 +70,7 @@ from qe.lib import Algorithm, Exchange, MarketType, OrderSide, StrategyType, Mar
 
 # 可用的枚举值
 print("算法类型:", [algo.value for algo in Algorithm])           # ['TWAP', 'VWAP', 'POV']
-print("交易所:", [exchange.value for exchange in Exchange])     # ['Binance', 'OKX', 'LTP', 'Deribit', 'Hyperliquid', 'Bybit']
+print("交易所:", [exchange.value for exchange in Exchange])     # ['Binance', 'OKX', 'LTP', 'Deribit', 'Hyperliquid', 'Bybit', 'Bitget']
 print("市场类型:", [market.value for market in MarketType])     # ['SPOT', 'PERP']
 print("订单方向:", [side.value for side in OrderSide])         # ['buy', 'sell']
 print("策略类型:", [strategy.value for strategy in StrategyType]) # ['TWAP_1', 'POV']
@@ -81,7 +81,7 @@ print("母单状态:", [status.value for status in MasterOrderStatus])  # ['NEW'
 # 使用枚举创建订单（推荐）
 response = client.create_master_order(
     algorithm=Algorithm.TWAP,        # 而不是 "TWAP"
-    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP、Exchange.DERIBIT、Exchange.HYPERLIQUID、Exchange.BYBIT       # 而不是 "Binance"（支持 Binance、OKX、LTP、Deribit、Hyperliquid、Bybit）
+    exchange=Exchange.BITGET,       # 而不是 "Bitget"
     marketType=MarketType.SPOT,      # 而不是 "SPOT"
     side=OrderSide.BUY,             # 而不是 "buy"
     # ... 其他参数
@@ -103,6 +103,7 @@ V2 主要差异：
 - **重命名**：母单出参 `apiKeyId`、`cumFilledQty/cumFilledNotional/avgFilledPrice/worstPrice`，子单出参 `orderId`（取代 `subOrderId`）、`filledNotional`（取代 `filledValue`）、`baseCurrency/quoteCurrency`、`orderType`；
 - **状态枚举完整化**：`MasterOrderStatusV2` 包含 `NEW / WAITING / PROCESSING / PAUSED / CANCELLED / COMPLETED / COMPLETED_WITHTAIL / REJECTED / EXPIRED`；
 - **Bybit 下单能力**：`Exchange.BYBIT` 可用于 V2 创建母单，支持普通下单与目标仓位模式；目标仓位模式下仍必须传 `totalQuantity`，且不可传 `orderNotional`；
+- **Bitget 下单能力**：`Exchange.BITGET` 可用于 V1/V2 创建母单，支持现货、U 本位和币本位的原有请求字段；币本位 symbol 形如 `BTCUSD_CM`；
 - **分页**：`pageSize` 上限 100，超过 100 会返回错误，不再静默裁剪。
 
 ### V2 方法清单（挂在 `User` 上）
@@ -120,6 +121,10 @@ V2 主要差异：
 | `resume_master_order_v2(masterOrderId, reason=...)` | 恢复 |
 | `update_master_order_v2(masterOrderId, request|**kwargs)` | 修改运行中母单参数 |
 | `batch_cancel_master_orders_v2(ids, reason=...)` | 批量取消 |
+
+V2 公开交易对使用 `Pub.trading_pairs_v2(exchange=..., marketType=..., isCoin=...)`，
+对应 `GET /pub/v2/trading-pairs`。Bitget 的 V1/V2 读取都使用后端通过
+`POST /file/trading-pair/upload` 发布的同一份快照，SDK 不会触发交易所产品同步。
 
 ### V2 类型（`from qe import ...` 或 `from qe.lib import ...`）
 
@@ -255,7 +260,8 @@ except Exception as e:
 
 ##### 查询交易对列表
 
-获取支持的交易对信息，包括现货和合约交易对。
+获取支持的交易对信息，包括现货和合约交易对。Bitget 在 V1/V2 中都读取
+`POST /file/trading-pair/upload` 发布的同一份产品快照。
 
 **请求参数：**
 
@@ -263,9 +269,9 @@ except Exception as e:
 |--------|------|----------|------|
 | page | int | 否 | 页码 |
 | pageSize | int | 否 | 每页数量 |
-| exchange | str | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit |
+| exchange | str/Exchange | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit、Bitget |
 | marketType | str/TradingPairMarketType | 否 | 市场类型筛选，可选值：SPOT（现货）、PERP（永续合约） |
-| isCoin | bool | 否 | 是否查询币本位合约可用交易对。传 `true` 时返回币本位合约可用交易对，仅 Binance 可用 |
+| isCoin | bool | 否 | 是否查询币本位合约可用交易对。Binance 和 Bitget 支持该筛选 |
 
 **响应字段：**
 
@@ -291,7 +297,7 @@ except Exception as e:
 
 ```python
 from qe.pub import Pub as PubClient
-from qe.lib import TradingPairMarketType
+from qe.lib import Exchange, TradingPairMarketType
 
 # 创建公共客户端（无需认证）
 pub_client = PubClient()
@@ -325,14 +331,14 @@ except Exception as e:
 
 # 使用枚举类型筛选（推荐）
 try:
-    # 获取币安现货交易对
+    # 获取 Bitget 现货交易对
     spot_pairs = pub_client.trading_pairs(
-        exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP
+        exchange=Exchange.BITGET,
         marketType=TradingPairMarketType.SPOT,  # 使用枚举
         page=1,
         pageSize=10
     )
-    print(f"币安现货交易对数量: {len(spot_pairs.get('items', []))}")
+    print(f"Bitget 现货交易对数量: {len(spot_pairs.get('items', []))}")
     
     # 获取合约交易对
     perp_pairs = pub_client.trading_pairs(
@@ -342,9 +348,20 @@ try:
     )
     print(f"合约交易对数量: {len(perp_pairs.get('items', []))}")
     
-    # 获取币本位合约可用交易对（仅 Binance）
-    coin_pairs = pub_client.trading_pairs(isCoin=True)
+    # 获取 Bitget 币本位合约可用交易对
+    coin_pairs = pub_client.trading_pairs(
+        exchange=Exchange.BITGET,
+        marketType=TradingPairMarketType.PERP,
+        isCoin=True,
+    )
     print(f"币本位合约交易对数量: {len(coin_pairs.get('items', []))}")
+
+    # V2 返回精简交易对字段，不带分页参数
+    coin_pairs_v2 = pub_client.trading_pairs_v2(
+        exchange=Exchange.BITGET,
+        marketType=TradingPairMarketType.PERP,
+        isCoin=True,
+    )
     
 except Exception as e:
     print(f"筛选交易对失败: {e}")
@@ -376,7 +393,7 @@ except Exception as e:
 |--------|------|----------|------|
 | page | int | 否 | 页码 |
 | pageSize | int | 否 | 每页数量 |
-| exchange | str | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit |
+| exchange | str | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit、Bitget |
 
 **响应字段：**
 
@@ -386,7 +403,7 @@ except Exception as e:
 | ├─ id | string | API 记录的唯一标识 |
 | ├─ createdAt | string | API 添加时间 |
 | ├─ accountName | string | 账户名称（如：账户1、账户2） |
-| ├─ exchange | string | 交易所名称（如：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit） |
+| ├─ exchange | string | 交易所名称（如：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit、Bitget） |
 | ├─ apiKey | string | 交易所 API Key（部分隐藏） |
 | ├─ verificationMethod | string | API 验证方式（如：OAuth、API） |
 | ├─ status | string | API 状态：正常、异常（不可用） |
@@ -439,10 +456,10 @@ apis = client.list_exchange_apis(
 | **基础参数** |
 | strategyType | string/StrategyType | 是    | 策略类型，可选值：TWAP-1、POV |
 | algorithm | string/Algorithm | 是    | 交易算法。strategyType=TWAP-1时，可选值：TWAP、VWAP；strategyType=POV时，可选值：POV |
-| exchange | string/Exchange | 是    | 交易所名称，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit |
+| exchange | string/Exchange | 是    | 交易所名称，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit、Bitget |
 | symbol | string | 是    | 交易对符号（如：BTCUSDT）（可用交易对查询） |
 | marketType | string/MarketType | 是    | 可选值：SPOT（现货）、PERP（永续合约） |
-| side | string/OrderSide | 是    | 1.如果isTargetPosition=False：side代表交易方向，可选值：buy（买入）、sell（卖出）；合约交易时可与reduceOnly组合，reduceOnly=True时：buy代表买入平空，sell代表卖出平多。2.如果isTargetPosition=True：side代表仓位方向，可选值：buy（多头）、sell（空头）。【仅合约交易时需传入】 |
+| side | string/OrderSide | 是    | 1.如果isTargetPosition=False：side代表交易方向，可选值：buy（买入）、sell（卖出）；合约交易时可与reduceOnly组合，reduceOnly=True时：buy代表买入平空，sell代表卖出平多。2.如果isTargetPosition=True：合约以及 Bitget 杠杆现货中 side 代表目标方向，buy 为正向/多头目标，sell 为负向/空头目标；非杠杆现货目标仓位不使用 side 表示目标符号。 |
 | apiKeyId | string | 是    | 指定使用的 API Key ID，这将决定您本次下单使用哪个交易所账户执行 |
 | **数量参数（二选一）** |
 | totalQuantity | float | 否*   | 要交易的总数量，与 orderNotional 二选一，输入范围：>0。Deribit 下单 BTCUSD/ETHUSD 时该字段单位为 USD；Binance 下单 `perp_cm` 时该字段单位为张，且必须为整数 |
@@ -471,7 +488,7 @@ apis = client.list_exchange_apis(
 | tailOrderProtection | bool | 否    | 订单余量小于交易所最小发单量时，是否必须taker扫完，如果false，则订单余量小于交易所最小发单量时，订单结束执行；如果true，则订单余量随最近一笔下单全额执行（可能会提高Taker率），默认：true |
 | **其他参数** |
 | reduceOnly | bool | 否    | 合约交易时是否仅减仓，默认值：false |
-| marginType | string/MarginType | 否*   | **永续合约必传参数** - 合约交易保证金类型，可选值：U（U本位）、C（币本位）。当 marketType 为 PERP（永续合约）时必传；其中 `C` 对应 Binance 币本位合约 |
+| marginType | string/MarginType | 否*   | **永续合约必传参数** - 合约交易保证金类型，可选值：U（U本位）、C（币本位）。当 marketType 为 PERP（永续合约）时必传 |
 | isMargin | bool | 否    | 是否使用现货杠杆。- 默认为false - 仅现货可使用该字段 |
 | notes | string | 否    | 订单备注 |
 | enableMake | bool | 否    | 是否允许挂单，如果关闭则全部吃单 - 默认：true |
@@ -497,7 +514,7 @@ from qe.lib import Algorithm, Exchange, MarketType, OrderSide, StrategyType, Mar
 # TWAP 订单示例 - 使用枚举创建订单（推荐）
 response = client.create_master_order(
     algorithm=Algorithm.TWAP,                      # 使用算法枚举
-    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP、Exchange.DERIBIT、Exchange.HYPERLIQUID、Exchange.BYBIT  # 使用交易所枚举（Binance、OKX、LTP、Deribit、Hyperliquid 或 Bybit）
+    exchange=Exchange.BINANCE,  # 也可使用 Exchange.BITGET 等交易所枚举
     symbol="BTCUSDT",
     marketType=MarketType.SPOT,                    # 使用市场类型枚举
     side=OrderSide.BUY,                           # 使用订单方向枚举
@@ -527,7 +544,7 @@ else:
 # 目标仓位下单示例 - 买入 1.5 BTC 到目标仓位
 response = client.create_master_order(
     algorithm=Algorithm.TWAP,                      # 使用算法枚举
-    exchange=Exchange.BINANCE,  # 或 Exchange.OKX、Exchange.LTP、Exchange.DERIBIT、Exchange.HYPERLIQUID、Exchange.BYBIT  # 使用交易所枚举（Binance、OKX、LTP、Deribit、Hyperliquid 或 Bybit）
+    exchange=Exchange.BINANCE,  # 也可使用 Exchange.BITGET 等交易所枚举
     symbol="BTCUSDT",
     marketType=MarketType.SPOT,                    # 使用市场类型枚举
     side=OrderSide.BUY,                           # 使用订单方向枚举
@@ -589,7 +606,7 @@ if response.get('success'):
 | page | int | 否 | 页码 |           
 | pageSize | int | 否 | 每页数量 |
 | status | string | 否 | 订单状态筛选，可选值：NEW（执行中）、COMPLETED（已完成） |
-| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit |
+| exchange | string | 否 | 交易所名称筛选，可选值：Binance、OKX、LTP、Deribit、Hyperliquid、Bybit、Bitget |
 | symbol | string | 否 | 交易对筛选 |
 | startTime | string | 否 | 开始时间筛选 |
 | endTime | string | 否 | 结束时间筛选 |
@@ -634,7 +651,7 @@ if response.get('success'):
 | ├─ lowTolerance | string | 下容忍度 |
 | ├─ strictUpBound | bool | 严格上界 |
 | ├─ ticktimeMs | int64 | 发单时间戳（epoch 毫秒） |
-| ├─ category | string | 交易品种（spot、perp 或 perp_cm，其中 perp_cm 表示 Binance 币本位合约） |
+| ├─ category | string | 交易品种（spot、perp 或 perp_cm，其中 perp_cm 表示币本位合约） |
 | ├─ filledAmount | float | 成交币数 |
 | ├─ totalValue | float | 成交总值 |
 | ├─ base | string | 基础币种 |
@@ -741,7 +758,7 @@ for order in orders['items']:
 | lowTolerance | string | 下容忍度 |
 | strictUpBound | bool | 严格上界 |
 | ticktimeMs | int | 发单时间戳（epoch 毫秒） |
-| category | string | 交易品种（spot、perp 或 perp_cm，其中 perp_cm 表示 Binance 币本位合约） |
+| category | string | 交易品种（spot、perp 或 perp_cm，其中 perp_cm 表示币本位合约） |
 | filledAmount | float | 成交币数 |
 | totalValue | float | 成交总值 |
 | base | string | 基础币种 |
@@ -1756,6 +1773,7 @@ except KeyboardInterrupt:
 | Deribit | Deribit |
 | Hyperliquid | Hyperliquid |
 | Bybit | Bybit |
+| Bitget | Bitget |
 
 **保证金类型 (MarginType)：**
 
@@ -1785,7 +1803,8 @@ except KeyboardInterrupt:
 - `timestamp()`: 获取服务器时间戳
 
 **Pub 接口（无需认证）：**
-- `trading_pairs()`: 获取交易对列表，支持各种筛选条件
+- `trading_pairs()`: 获取 V1 交易对列表，支持各种筛选条件
+- `trading_pairs_v2()`: 获取 V2 交易对列表，支持 `exchange` / `marketType` / `isCoin`
 
 **User 接口（需要认证）：**
 - 所有交易相关功能都需要有效的 API 密钥
