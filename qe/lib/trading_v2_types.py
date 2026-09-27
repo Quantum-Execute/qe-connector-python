@@ -171,7 +171,7 @@ class CreateMasterOrderV2Request:
 
     Decimal 类字段（``totalQuantity``、``orderNotional``、``worstPrice``、
     ``makerRateLimit``、``povLimit``、``povMinLimit``、``upTolerance``、
-    ``lowTolerance``）允许传 ``str | int | float | Decimal``，序列化时统一
+    ``lowTolerance``、``triggerPrice``）允许传 ``str | int | float | Decimal``，序列化时统一
     转为 ``str``（与后端约定一致）。
     """
 
@@ -193,6 +193,8 @@ class CreateMasterOrderV2Request:
     isMargin: Optional[bool] = None
 
     worstPrice: Optional[DecimalLike] = None
+    triggerPrice: Optional[DecimalLike] = None
+    maxTriggerWaitSecs: Optional[float] = None
 
     mustComplete: Optional[bool] = None
     makerRateLimit: Optional[DecimalLike] = None
@@ -213,6 +215,7 @@ class CreateMasterOrderV2Request:
             "totalQuantity",
             "orderNotional",
             "worstPrice",
+            "triggerPrice",
             "makerRateLimit",
             "povLimit",
             "povMinLimit",

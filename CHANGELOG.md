@@ -2,7 +2,7 @@
 
 本文件记录 `qe-connector`（Python SDK）的用户可见变更。
 
-## Unreleased
+## 1.3.2 - 2026-09-27
 
 ### 新增
 
@@ -12,10 +12,24 @@
 - **V2 交易对查询**：新增 `Pub.trading_pairs_v2()`，请求
   `GET /pub/v2/trading-pairs`，支持 `exchange` / `marketType` / `isCoin` 筛选；
   Bitget V1/V2 都读取 `/file/trading-pair/upload` 发布的同一份快照。
+- **V2 下单触发参数**：`CreateMasterOrderV2Request` 和
+  `User.create_master_order_v2()` 的关键字参数新增 `triggerPrice`、`maxTriggerWaitSecs`。
+  - `triggerPrice`：触发价，接受 `str` / `int` / `float` / `Decimal`，发送时统一转为十进制字符串；`0` 表示不启用价格触发。需要精确价格时建议使用 `str` 或 `Decimal`。
+  - `maxTriggerWaitSecs`：最大触发等待时间，单位秒，支持小数秒；`0` 表示不限制等待时间。
+  - 两个参数均为可选，显式零值会发送，未设置的参数不发送；关键字参数可覆盖请求 dataclass 中的对应值。
 
 ### 修复
 
-- `Pub.trading_pairs()` 现会将 `Exchange` 枚举序列化为后端需要的字符串值。
+- 公共交易对查询会将 `Exchange` 和 `TradingPairMarketType` 枚举序列化为后端需要的字符串值。
+
+### 兼容性
+
+- 新增触发参数仅用于 V2 创建母单，原有下单调用和 V1 接口保持兼容。
+- 触发功能需配合支持该功能的后端和算法服务。触发价应为非负数，遵循后端 `DECIMAL(30,10)` 精度限制（最多 20 位整数、10 位有效小数）；等待时间应为有限非负数。
+
+### 文档
+
+- 更新 README 中的 Bitget、交易对查询及 SDK 使用说明，并新增接入与维护指南 `docs/qe-connector-python-handoff.md`。
 
 ## 1.3.1 - 2026-06-17
 

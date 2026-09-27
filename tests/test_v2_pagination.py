@@ -126,6 +126,29 @@ def test_create_master_order_v2_requires_execution_duration_seconds():
     assert client.json_calls == []
 
 
+def test_create_master_order_v2_forwards_trigger_fields():
+    client = DummyClient()
+    request = CreateMasterOrderV2Request(
+        apiKeyId="dummy-api-key-id",
+        exchange="Binance",
+        marketType="SPOT",
+        symbol="DOGEUSDT",
+        side="buy",
+        algorithm="TWAP",
+        executionDurationSeconds=60,
+        orderNotional="6",
+        triggerPrice="65000.123456789012345678",
+        maxTriggerWaitSecs=300.5,
+    )
+    create_master_order_v2(client, request=request)
+    assert client.json_calls[-1][2]["triggerPrice"] == "65000.123456789012345678"
+    assert client.json_calls[-1][2]["maxTriggerWaitSecs"] == 300.5
+
+    create_master_order_v2(client, request=request, triggerPrice="70000", maxTriggerWaitSecs=0)
+    assert client.json_calls[-1][2]["triggerPrice"] == "70000"
+    assert client.json_calls[-1][2]["maxTriggerWaitSecs"] == 0
+
+
 def test_create_master_order_v2_no_longer_exposes_limit_price_fields():
     assert "limitPrice" not in CreateMasterOrderV2Request.__dataclass_fields__
     assert "limitPriceString" not in CreateMasterOrderV2Request.__dataclass_fields__

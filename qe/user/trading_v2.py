@@ -35,6 +35,7 @@ _CREATE_DECIMAL_KWARGS = (
     "totalQuantity",
     "orderNotional",
     "worstPrice",
+    "triggerPrice",
     "makerRateLimit",
     "povLimit",
     "povMinLimit",
@@ -46,6 +47,7 @@ _CREATE_DECIMAL_KWARGS = (
 _CREATE_PASSTHROUGH_KWARGS = (
     "executionDurationSeconds",
     "startTimeMs",
+    "maxTriggerWaitSecs",
     "marginType",
     "reduceOnly",
     "isMargin",
@@ -154,7 +156,7 @@ def create_master_order_v2(
            )
 
     All Decimal-shaped kwargs (``totalQuantity``, ``orderNotional``,
-    ``worstPrice``, ``makerRateLimit``, ``povLimit``, ``povMinLimit``,
+    ``worstPrice``, ``triggerPrice``, ``makerRateLimit``, ``povLimit``, ``povMinLimit``,
     ``upTolerance``, ``lowTolerance``) accept ``str`` / ``int`` / ``float`` /
     ``Decimal`` and are serialised as ``str``.
 

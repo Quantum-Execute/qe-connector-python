@@ -29,12 +29,12 @@
 
 当前包信息：
 
-| 项 | 当前值 |
-| --- | --- |
-| PyPI 包名 | `qe-connector` |
-| Python 版本 | `>=3.8` |
-| SDK 版本 | `qe/__version__.py` 中 `__version__ = "1.3.1"` |
-| 测试矩阵 | `tox.ini` 中 `py38,py39,310,311` |
+| 项          | 当前值                                             |
+| ----------- | -------------------------------------------------- |
+| PyPI 包名   | `qe-connector`                                   |
+| Python 版本 | `>=3.8`                                          |
+| SDK 版本    | `qe/__version__.py` 中 `__version__ = "1.3.1"` |
+| 测试矩阵    | `tox.ini` 中 `py38,py39,310,311`               |
 
 安装开发依赖后运行：
 
@@ -85,25 +85,25 @@ client = User(api_key, api_secret, base_url="https://api.quantumexecute.com/stra
 
 ## 3. 目录结构
 
-| 路径 | 说明 |
-| --- | --- |
-| `setup.py` | 包元数据、依赖、Python 版本要求 |
-| `qe/__version__.py` | SDK 版本号 |
-| `qe/api.py` | Base API、签名、Session、响应解析 |
-| `qe/user/__init__.py` | `User` 类，把 V1/V2 方法注入为实例方法 |
-| `qe/user/trading.py` | V1 母单、子单、TCA、listenKey |
-| `qe/user/trading_v2.py` | V2 母单、子单、TCA、动作接口、listenKey |
-| `qe/user/exchange_v2.py` | V2 交易所 API Key 列表 |
-| `qe/user/exchange_balance.py` | 交易所余额、账户、持仓代理接口 |
-| `qe/pub/trading.py` | V1/V2 公共交易对 |
-| `qe/lib/trading_enums.py` | 交易、市场、交易所枚举 |
-| `qe/lib/trading_v2_types.py` | V2 dataclass、状态枚举、字段转换 |
-| `qe/ws/client.py` | WebSocket 客户端、重连、消息分发 |
-| `qe/ws/types.py` | WebSocket 消息类型和 handler dataclass |
-| `tests/` | Bitget、枚举、V2 签名、分页、WS 测试 |
-| `examples/` | 用户接口、公共接口、WS 示例 |
-| `Makefile` | `make build`、`make upload` |
-| `tox.ini` | 多 Python 版本测试配置 |
+| 路径                            | 说明                                     |
+| ------------------------------- | ---------------------------------------- |
+| `setup.py`                    | 包元数据、依赖、Python 版本要求          |
+| `qe/__version__.py`           | SDK 版本号                               |
+| `qe/api.py`                   | Base API、签名、Session、响应解析        |
+| `qe/user/__init__.py`         | `User` 类，把 V1/V2 方法注入为实例方法 |
+| `qe/user/trading.py`          | V1 母单、子单、TCA、listenKey            |
+| `qe/user/trading_v2.py`       | V2 母单、子单、TCA、动作接口、listenKey  |
+| `qe/user/exchange_v2.py`      | V2 交易所 API Key 列表                   |
+| `qe/user/exchange_balance.py` | 交易所余额、账户、持仓代理接口           |
+| `qe/pub/trading.py`           | V1/V2 公共交易对                         |
+| `qe/lib/trading_enums.py`     | 交易、市场、交易所枚举                   |
+| `qe/lib/trading_v2_types.py`  | V2 dataclass、状态枚举、字段转换         |
+| `qe/ws/client.py`             | WebSocket 客户端、重连、消息分发         |
+| `qe/ws/types.py`              | WebSocket 消息类型和 handler dataclass   |
+| `tests/`                      | Bitget、枚举、V2 签名、分页、WS 测试     |
+| `examples/`                   | 用户接口、公共接口、WS 示例              |
+| `Makefile`                    | `make build`、`make upload`          |
+| `tox.ini`                     | 多 Python 版本测试配置                   |
 
 仓库中已有 `build/`、`dist/`、`qe_connector.egg-info/` 等历史产物。日常改 SDK 源码和文档时不要顺手重建或删除这些产物；只有正式发版时再按发布流程处理。
 
@@ -149,21 +149,21 @@ client = User(api_key, api_secret, base_url="https://api.quantumexecute.com/stra
 
 当前 V2 方法：
 
-| 方法 | Method / Path |
-| --- | --- |
-| `list_exchange_apis_v2()` | `GET /user/exchange/v2/exchange-apis` |
-| `create_master_order_v2()` | `POST /user/trading/v2/master-orders` |
-| `list_master_orders_v2()` | `GET /user/trading/v2/master-orders` |
-| `get_master_order_v2(masterOrderId)` | `GET /user/trading/v2/master-orders/{masterOrderId}` |
+| 方法                                                      | Method / Path                                                             |
+| --------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `list_exchange_apis_v2()`                               | `GET /user/exchange/v2/exchange-apis`                                   |
+| `create_master_order_v2()`                              | `POST /user/trading/v2/master-orders`                                   |
+| `list_master_orders_v2()`                               | `GET /user/trading/v2/master-orders`                                    |
+| `get_master_order_v2(masterOrderId)`                    | `GET /user/trading/v2/master-orders/{masterOrderId}`                    |
 | `get_master_order_by_client_order_id_v2(clientOrderId)` | `GET /user/trading/v2/master-orders/by-client-order-id/{clientOrderId}` |
-| `list_order_fills_v2()` | `GET /user/trading/v2/order-fills` |
-| `get_tca_analysis_v2()` | `GET /user/trading/v2/tca-analysis` |
-| `create_listen_key_v2()` | `POST /user/trading/v2/listen-key` |
-| `cancel_master_order_v2()` | `PUT /user/trading/v2/master-orders/{masterOrderId}/cancel` |
-| `pause_master_order_v2()` | `PUT /user/trading/v2/master-orders/{masterOrderId}/pause` |
-| `resume_master_order_v2()` | `PUT /user/trading/v2/master-orders/{masterOrderId}/resume` |
-| `update_master_order_v2()` | `PUT /user/trading/v2/master-orders/{masterOrderId}/update` |
-| `batch_cancel_master_orders_v2()` | `PUT /user/trading/v2/master-orders/batch-cancel` |
+| `list_order_fills_v2()`                                 | `GET /user/trading/v2/order-fills`                                      |
+| `get_tca_analysis_v2()`                                 | `GET /user/trading/v2/tca-analysis`                                     |
+| `create_listen_key_v2()`                                | `POST /user/trading/v2/listen-key`                                      |
+| `cancel_master_order_v2()`                              | `PUT /user/trading/v2/master-orders/{masterOrderId}/cancel`             |
+| `pause_master_order_v2()`                               | `PUT /user/trading/v2/master-orders/{masterOrderId}/pause`              |
+| `resume_master_order_v2()`                              | `PUT /user/trading/v2/master-orders/{masterOrderId}/resume`             |
+| `update_master_order_v2()`                              | `PUT /user/trading/v2/master-orders/{masterOrderId}/update`             |
+| `batch_cancel_master_orders_v2()`                       | `PUT /user/trading/v2/master-orders/batch-cancel`                       |
 
 `create_master_order_v2` 支持两种调用方式：
 
@@ -194,17 +194,17 @@ V2 dataclass 在 `qe/lib/trading_v2_types.py`。它们故意使用 lowerCamelCas
 
 常用类型：
 
-| 类型 | 说明 |
-| --- | --- |
-| `CreateMasterOrderV2Request` | 创建母单请求体 |
-| `UpdateMasterOrderV2Request` | 修改母单请求体 |
-| `CreateMasterOrderV2Reply` | 创建母单响应 |
-| `MasterOrderV2Info` | 母单列表/详情记录 |
-| `OrderFillV2Info` | 子单/成交记录 |
-| `ExchangeApiV2Info` | 交易所 API Key 绑定记录 |
-| `MasterOrderActionV2Reply` | 取消/暂停/恢复/修改动作响应 |
-| `BatchCancelV2Reply`、`BatchCancelV2FailedItem` | 批量取消响应 |
-| `MasterOrderStatusV2` | V2 母单状态全集 |
+| 类型                                                | 说明                        |
+| --------------------------------------------------- | --------------------------- |
+| `CreateMasterOrderV2Request`                      | 创建母单请求体              |
+| `UpdateMasterOrderV2Request`                      | 修改母单请求体              |
+| `CreateMasterOrderV2Reply`                        | 创建母单响应                |
+| `MasterOrderV2Info`                               | 母单列表/详情记录           |
+| `OrderFillV2Info`                                 | 子单/成交记录               |
+| `ExchangeApiV2Info`                               | 交易所 API Key 绑定记录     |
+| `MasterOrderActionV2Reply`                        | 取消/暂停/恢复/修改动作响应 |
+| `BatchCancelV2Reply`、`BatchCancelV2FailedItem` | 批量取消响应                |
+| `MasterOrderStatusV2`                             | V2 母单状态全集             |
 
 字段转换规则：
 
@@ -220,34 +220,34 @@ V2 dataclass 在 `qe/lib/trading_v2_types.py`。它们故意使用 lowerCamelCas
 
 公共交易对入口在 `qe/pub/trading.py`：
 
-| 方法 | Path | 说明 |
-| --- | --- | --- |
-| `Pub.trading_pairs()` | `GET /pub/trading-pairs` | V1 公共交易对，保留兼容 |
-| `Pub.trading_pairs_v2()` | `GET /pub/v2/trading-pairs` | V2 公共交易对，支持 `exchange`、`marketType`、`isCoin` |
+| 方法                       | Path                          | 说明                                                        |
+| -------------------------- | ----------------------------- | ----------------------------------------------------------- |
+| `Pub.trading_pairs()`    | `GET /pub/trading-pairs`    | V1 公共交易对，保留兼容                                     |
+| `Pub.trading_pairs_v2()` | `GET /pub/v2/trading-pairs` | V2 公共交易对，支持`exchange`、`marketType`、`isCoin` |
 
 交易所枚举在 `qe/lib/trading_enums.py`：
 
-| 交易所 | 枚举 | 当前 SDK 覆盖 |
-| --- | --- | --- |
-| Binance | `Exchange.BINANCE` | V1/V2 母单、公共交易对、spot/futures/PAPI/PV1/UM/CM/DAPI/cross margin 余额与账户、position side |
-| OKX | `Exchange.OKX` | V1/V2 母单、公共交易对、账户余额、持仓、最大可下单量 |
-| LTP | `Exchange.LTP` | V1/V2 母单、公共交易对、账户、组合资产、持仓 |
-| Deribit | `Exchange.DERIBIT` | V1/V2 母单、公共交易对、账户、持仓 |
-| Hyperliquid | `Exchange.HYPERLIQUID` | V1/V2 母单、公共交易对、spot balance、perp positions |
-| Bybit | `Exchange.BYBIT` | V2 交易所校验、母单、公共交易对；目标仓位模式遵循 V2 数量规则 |
-| Bitget | `Exchange.BITGET` | V1/V2 母单、公共交易对；币本位 symbol 形如 `BTCUSD_CM` |
+| 交易所      | 枚举                     | 当前 SDK 覆盖                                                                                   |
+| ----------- | ------------------------ | ----------------------------------------------------------------------------------------------- |
+| Binance     | `Exchange.BINANCE`     | V1/V2 母单、公共交易对、spot/futures/PAPI/PV1/UM/CM/DAPI/cross margin 余额与账户、position side |
+| OKX         | `Exchange.OKX`         | V1/V2 母单、公共交易对、账户余额、持仓、最大可下单量                                            |
+| LTP         | `Exchange.LTP`         | V1/V2 母单、公共交易对、账户、组合资产、持仓                                                    |
+| Deribit     | `Exchange.DERIBIT`     | V1/V2 母单、公共交易对、账户、持仓                                                              |
+| Hyperliquid | `Exchange.HYPERLIQUID` | V1/V2 母单、公共交易对、spot balance、perp positions                                            |
+| Bybit       | `Exchange.BYBIT`       | V2 交易所校验、母单、公共交易对；目标仓位模式遵循 V2 数量规则                                   |
+| Bitget      | `Exchange.BITGET`      | V1/V2 母单、公共交易对；币本位 symbol 形如`BTCUSD_CM`                                         |
 
 余额/账户/持仓接口在 `qe/user/exchange_balance.py`，本质是平台后端代理交易所请求，SDK 只对 QE 平台签名。
 
-| 分类 | 方法 |
-| --- | --- |
-| Binance 余额 | `get_account_balance`、`get_margin_balance`、`get_pv1_balance` |
-| Binance 账户 | `get_um_account`、`get_cm_account`、`get_pv1_account`、`get_dapi_account`、`get_fapi_account`、`get_cross_margin_account_detail` |
-| Binance 持仓设置 | `get_fapi_position_side_dial`、`get_papi_um_position_side_dual` |
-| OKX | `get_okx_account_balance`、`get_okx_account_positions`、`get_okx_account_max_size` |
-| LTP | `get_ltp_account`、`get_ltp_portfolio_asset`、`get_ltp_position` |
-| Deribit | `get_deribit_account`、`get_deribit_position` |
-| Hyperliquid | `get_hyperliquid_spot_balance`、`get_hyperliquid_positions` |
+| 分类             | 方法                                                                                                                                         |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Binance 余额     | `get_account_balance`、`get_margin_balance`、`get_pv1_balance`                                                                         |
+| Binance 账户     | `get_um_account`、`get_cm_account`、`get_pv1_account`、`get_dapi_account`、`get_fapi_account`、`get_cross_margin_account_detail` |
+| Binance 持仓设置 | `get_fapi_position_side_dial`、`get_papi_um_position_side_dual`                                                                          |
+| OKX              | `get_okx_account_balance`、`get_okx_account_positions`、`get_okx_account_max_size`                                                     |
+| LTP              | `get_ltp_account`、`get_ltp_portfolio_asset`、`get_ltp_position`                                                                       |
+| Deribit          | `get_deribit_account`、`get_deribit_position`                                                                                            |
+| Hyperliquid      | `get_hyperliquid_spot_balance`、`get_hyperliquid_positions`                                                                              |
 
 新增交易所时：
 
@@ -308,13 +308,13 @@ git diff --check
 
 针对性测试：
 
-| 场景 | 建议命令 |
-| --- | --- |
-| V2 JSON body 签名 | `python -m pytest tests/test_v2_json_signing.py` |
-| V2 pageSize、alias | `python -m pytest tests/test_v2_pagination.py` |
-| WebSocket V2 | `python -m pytest tests/test_ws_v2.py` |
-| 交易所枚举 | `python -m pytest tests/test_exchange_enums.py` |
-| Bitget | `python -m pytest tests/test_bitget_support.py` |
+| 场景               | 建议命令                                           |
+| ------------------ | -------------------------------------------------- |
+| V2 JSON body 签名  | `python -m pytest tests/test_v2_json_signing.py` |
+| V2 pageSize、alias | `python -m pytest tests/test_v2_pagination.py`   |
+| WebSocket V2       | `python -m pytest tests/test_ws_v2.py`           |
+| 交易所枚举         | `python -m pytest tests/test_exchange_enums.py`  |
+| Bitget             | `python -m pytest tests/test_bitget_support.py`  |
 
 新增测试建议：
 
