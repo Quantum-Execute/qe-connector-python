@@ -2,6 +2,16 @@
 
 本文件记录 `qe-connector`（Python SDK）的用户可见变更。
 
+## 1.3.3 - 2026-09-30
+
+- V2 创建母单新增 `maxTriggerWaitTimeoutAction: Optional[int]`，整数范围 `0～10`；未设置时省略，后端默认 `0`（到期终止委托），显式 `0` 会发送。`1～10` 为预留编号，行为需算法版本支持。
+- V2 列表/详情模型新增 `maxTriggerWaitTimeoutAction`；SDK 校验输入范围，Python 还拒绝布尔值和非整数。V1 保持兼容。
+
+- V2 创建母单的请求 dataclass 和关键字参数新增可选 `triggerPrice1`，保留原 `triggerPrice`。可设置市场价格上涨或下跌时的触发价位，满足条件后启动算法委托。两个价格可都不填、单独设置或同时设置；留空或 `0` 禁用对应项。触发价仅用于启动委托，不代表最终成交价。
+- `triggerPrice1` 支持 `str` / `int` / `float` / `Decimal`，发送时转为字符串；精确价格建议使用 `str` 或 `Decimal`。
+- `MasterOrderV2Info` 补齐 `triggerPrice`、`triggerPrice1`、`maxTriggerWaitSecs`，供列表和详情读取。
+- 新参数需配合支持 `triggerPrice1` 的后端和算法；价格精度沿用 `DECIMAL(30,10)`。
+
 ## 1.3.2 - 2026-09-27
 
 ### 新增

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import pytest
 
 from qe.lib.trading_v2_types import (
@@ -138,15 +140,43 @@ def test_create_master_order_v2_forwards_trigger_fields():
         executionDurationSeconds=60,
         orderNotional="6",
         triggerPrice="65000.123456789012345678",
+        triggerPrice1=Decimal("99999999999999999999.1234567891"),
         maxTriggerWaitSecs=300.5,
     )
     create_master_order_v2(client, request=request)
     assert client.json_calls[-1][2]["triggerPrice"] == "65000.123456789012345678"
+    assert client.json_calls[-1][2]["triggerPrice1"] == "99999999999999999999.1234567891"
     assert client.json_calls[-1][2]["maxTriggerWaitSecs"] == 300.5
 
-    create_master_order_v2(client, request=request, triggerPrice="70000", maxTriggerWaitSecs=0)
+    create_master_order_v2(client, request=request, triggerPrice="70000", triggerPrice1=0, maxTriggerWaitSecs=0)
     assert client.json_calls[-1][2]["triggerPrice"] == "70000"
+    assert client.json_calls[-1][2]["triggerPrice1"] == "0"
     assert client.json_calls[-1][2]["maxTriggerWaitSecs"] == 0
+
+
+@pytest.mark.parametrize("prices", [{}, {"triggerPrice": "82000"}, {"triggerPrice1": "86000"}, {"triggerPrice": "86000", "triggerPrice1": "82000"}, {"triggerPrice1": "0"}])
+def test_create_master_order_v2_trigger_prices_are_independent(prices):
+    client = DummyClient()
+    request = CreateMasterOrderV2Request(
+        apiKeyId="binding-id", exchange="OKX", marketType="SPOT", symbol="BTCUSDT",
+        side="buy", algorithm="TWAP", executionDurationSeconds=60, totalQuantity="1",
+    )
+    create_master_order_v2(client, request=request, **prices)
+    payload = client.json_calls[-1][2]
+    for field in ("triggerPrice", "triggerPrice1"):
+        assert payload.get(field) == prices.get(field)
+        assert (field in payload) == (field in prices)
+
+
+def test_master_order_v2_info_keeps_trigger_prices():
+    info = MasterOrderV2Info.from_dict({
+        "triggerPrice": "0", "triggerPrice1": "99999999999999999999.1234567891",
+        "maxTriggerWaitSecs": 300.5,
+    })
+    assert info.triggerPrice == "0"
+    assert info.triggerPrice1 == "99999999999999999999.1234567891"
+    assert info.maxTriggerWaitSecs == 300.5
+    assert MasterOrderV2Info.from_dict({}).triggerPrice1 is None
 
 
 def test_create_master_order_v2_no_longer_exposes_limit_price_fields():

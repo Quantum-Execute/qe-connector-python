@@ -165,14 +165,21 @@ class ExchangeApiListV2Reply:
 # ---------------------------------------------------------------------------
 
 
+def validate_trigger_timeout_action(value: Any) -> None:
+    if value is not None and (isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 10):
+        raise ValueError("maxTriggerWaitTimeoutAction must be an integer from 0 to 10")
+
+
 @dataclass
 class CreateMasterOrderV2Request:
     """V2 ``POST /user/trading/v2/master-orders`` 请求体。
 
     Decimal 类字段（``totalQuantity``、``orderNotional``、``worstPrice``、
     ``makerRateLimit``、``povLimit``、``povMinLimit``、``upTolerance``、
-    ``lowTolerance``、``triggerPrice``）允许传 ``str | int | float | Decimal``，序列化时统一
+    ``lowTolerance``、``triggerPrice``、``triggerPrice1``）允许传 ``str | int | float | Decimal``，序列化时统一
     转为 ``str``（与后端约定一致）。
+
+    可设置市场价格上涨或下跌时的触发价位，满足条件后启动算法委托。两个触发价均为选填，可都不填、只填一个或同时填写；留空或填 0 表示禁用该项。触发价仅用于启动委托，不代表最终成交价。
     """
 
     apiKeyId: str = ""
@@ -209,13 +216,17 @@ class CreateMasterOrderV2Request:
 
     clientOrderId: Optional[str] = None
     notes: Optional[str] = None
+    triggerPrice1: Optional[DecimalLike] = None
+    maxTriggerWaitTimeoutAction: Optional[int] = None
 
     def to_payload(self) -> Dict[str, Any]:
+        validate_trigger_timeout_action(self.maxTriggerWaitTimeoutAction)
         decimal_fields = {
             "totalQuantity",
             "orderNotional",
             "worstPrice",
             "triggerPrice",
+            "triggerPrice1",
             "makerRateLimit",
             "povLimit",
             "povMinLimit",
@@ -296,6 +307,10 @@ class MasterOrderV2Info:
     makerRate: Optional[str] = None
     completedQuantity: Optional[str] = None
     commission: Optional[Dict[str, str]] = None
+    triggerPrice: Optional[str] = None
+    triggerPrice1: Optional[str] = None
+    maxTriggerWaitSecs: Optional[float] = None
+    maxTriggerWaitTimeoutAction: Optional[int] = None
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "MasterOrderV2Info":

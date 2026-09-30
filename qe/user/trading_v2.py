@@ -21,6 +21,7 @@ from qe.lib.trading_v2_types import (
     to_decimal_str,
     validate_exchange,
     validate_market_type,
+    validate_trigger_timeout_action,
 )
 from qe.lib.utils import check_required_parameters
 
@@ -36,6 +37,7 @@ _CREATE_DECIMAL_KWARGS = (
     "orderNotional",
     "worstPrice",
     "triggerPrice",
+    "triggerPrice1",
     "makerRateLimit",
     "povLimit",
     "povMinLimit",
@@ -48,6 +50,7 @@ _CREATE_PASSTHROUGH_KWARGS = (
     "executionDurationSeconds",
     "startTimeMs",
     "maxTriggerWaitSecs",
+    "maxTriggerWaitTimeoutAction",
     "marginType",
     "reduceOnly",
     "isMargin",
@@ -156,9 +159,18 @@ def create_master_order_v2(
            )
 
     All Decimal-shaped kwargs (``totalQuantity``, ``orderNotional``,
-    ``worstPrice``, ``triggerPrice``, ``makerRateLimit``, ``povLimit``, ``povMinLimit``,
+    ``worstPrice``, ``triggerPrice``, ``triggerPrice1``, ``makerRateLimit``, ``povLimit``, ``povMinLimit``,
     ``upTolerance``, ``lowTolerance``) accept ``str`` / ``int`` / ``float`` /
     ``Decimal`` and are serialised as ``str``.
+
+    ``triggerPrice`` and ``triggerPrice1`` set price levels that trigger an
+    algorithm order as the market rises or falls. Execution starts when the
+    trigger conditions are met. Both prices are optional: set either, both,
+    or neither. Omitted/None values are not sent; an empty string or 0 disables
+    the corresponding price. Trigger prices only determine when the order
+    starts; they are not final execution prices.
+    ``maxTriggerWaitTimeoutAction`` accepts integers 0..10; omission defaults to
+    0 (expire order). Codes 1..10 require support from the algorithm version.
 
     Returns:
         dict: Raw response body as returned by the server. Use
@@ -196,6 +208,7 @@ def create_master_order_v2(
         if k in kwargs and kwargs[k] is not None:
             params[k] = to_decimal_str(kwargs[k])
     _reject_unsupported_v2_fields(params, _UNSUPPORTED_CREATE_V2_FIELDS)
+    validate_trigger_timeout_action(params.get("maxTriggerWaitTimeoutAction"))
 
     # Required field check (after merge).
     check_required_parameters([
