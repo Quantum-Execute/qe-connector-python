@@ -27,6 +27,7 @@ class MarketType(str, Enum):
     """市场类型枚举"""
     SPOT = "SPOT"  # 现货市场
     PERP = "PERP"  # 合约市场
+    OPTION = "OPTION"  # Deribit 期权（V2）
 
 
 class OrderSide(str, Enum):
@@ -57,6 +58,7 @@ class Category(str, Enum):
     SPOT = "spot"  # 现货品种
     PERP = "perp"  # 合约品种
     PERP_CM = "perp_cm"  # 币本位合约品种
+    OPTION = "option"  # 期权品种
 
 
 class TradingPairMarketType(str, Enum):
@@ -64,3 +66,4 @@ class TradingPairMarketType(str, Enum):
     SPOT = "SPOT"        # 现货品种
     PERP = "PERP"        # 永续合约品种
     FUTURES = "PERP"     # 兼容旧名称，发送值统一为 PERP
+    OPTION = "OPTION"    # Deribit 期权

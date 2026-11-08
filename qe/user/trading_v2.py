@@ -10,6 +10,8 @@ Reference: ``backend-server/docs/frontend-v2-api-upgrade.md`` sections 4–7.
 from __future__ import annotations
 
 from decimal import Decimal, InvalidOperation
+import math
+import re
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 from qe.lib.trading_enums import Algorithm, Exchange, MarketType, OrderSide, MarginType
@@ -29,6 +31,10 @@ _BASE_PATH = "/user/trading/v2/master-orders"
 _FILLS_PATH = "/user/trading/v2/order-fills"
 _TCA_PATH = "/user/trading/v2/tca-analysis"
 _LISTEN_KEY_PATH = "/user/trading/v2/listen-key"
+
+_OPTION_TRIGGER_PRICE_PATTERN = re.compile(
+    r"\+?([0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE]([+-]?[0-9]+))?"
+)
 
 
 # Decimal-shaped fields accepted via **kwargs in create_master_order_v2.
@@ -59,6 +65,7 @@ _CREATE_PASSTHROUGH_KWARGS = (
     "tailOrderProtection",
     "enableMake",
     "isTargetPosition",
+    "expectedExecutionSide",
     "clientOrderId",
     "notes",
     "recvWindow",
@@ -117,6 +124,67 @@ def _validate_pov_limit(value: Any) -> None:
         raise ValueError("povLimit must be between 0 and 1")
 
 
+def _option_trigger_enabled(raw: str) -> bool:
+    """Match backend normalizeTriggerPrice without rounding or expanding exponents."""
+    raw = raw.strip()
+    if not raw:
+        return False
+    parts = _OPTION_TRIGGER_PRICE_PATTERN.fullmatch(raw)
+    if parts is None:
+        raise ValueError("OPTION trigger price must fit non-negative DECIMAL(30,10)")
+    integer, _, fraction = parts.group(1).partition(".")
+    all_digits = integer + fraction
+    digits = all_digits.lstrip("0")
+    if not digits:
+        return False
+    exponent_text = parts.group(2) or "0"
+    exponent_digits = exponent_text.lstrip("+-").lstrip("0")
+    if len(exponent_digits) > 10:
+        raise ValueError("OPTION trigger price must fit non-negative DECIMAL(30,10)")
+    exponent = int(exponent_digits or "0")
+    if exponent_text.startswith("-"):
+        exponent = -exponent
+    significant = digits.rstrip("0")
+    integer_places = len(integer) + exponent - (len(all_digits) - len(digits))
+    if (
+        not -(2**31) <= exponent < 2**31
+        or integer_places > 20
+        or len(significant) - integer_places > 10
+    ):
+        raise ValueError("OPTION trigger price must fit non-negative DECIMAL(30,10)")
+    return True
+
+
+def _validate_option_request(params: Dict[str, Any]) -> None:
+    """Validate static OPTION constraints; live contract rules stay server-side."""
+    if params["exchange"] != "Deribit":
+        raise ValueError("OPTION is supported only on Deribit")
+    if params.get("orderNotional") is not None or params.get("isMargin") is True:
+        raise ValueError("OPTION does not support orderNotional or isMargin=true")
+    target = params.get("isTargetPosition") is True
+    for name, allow_zero in (("totalQuantity", target), ("worstPrice", False)):
+        value = params.get(name)
+        if not isinstance(value, str) or not re.fullmatch(
+            r"[0-9]{1,20}(\.[0-9]{1,10})?", value.strip()
+        ):
+            raise ValueError(f"OPTION requires a valid decimal {name}")
+        if Decimal(value) <= 0 and not allow_zero:
+            raise ValueError(f"OPTION requires a positive {name}")
+    if target and params.get("expectedExecutionSide") not in ("buy", "sell"):
+        raise ValueError("OPTION targets require expectedExecutionSide=buy or sell from the position preview")
+    for name in ("triggerPrice", "triggerPrice1"):
+        value = params.get(name)
+        if value is None:
+            continue
+        if _option_trigger_enabled(value):
+            try:
+                wait = float(params.get("maxTriggerWaitSecs"))
+            except (TypeError, ValueError) as exc:
+                raise ValueError("OPTION price triggers require a finite positive maxTriggerWaitSecs") from exc
+            if not math.isfinite(wait) or wait <= 0:
+                raise ValueError("OPTION price triggers require a finite positive maxTriggerWaitSecs")
+
+
 # ---------------------------------------------------------------------------
 # Create / list / detail
 # ---------------------------------------------------------------------------
@@ -172,6 +240,11 @@ def create_master_order_v2(
     ``maxTriggerWaitTimeoutAction`` accepts integers 0..10; omission defaults to
     0 (expire order). Codes 1..10 require support from the algorithm version.
 
+    OPTION is Deribit-only. Quantities are in the base asset; worstPrice is a
+    required positive premium. Target mode requires expectedExecutionSide from
+    a current-position preview. Omitted/zero duration defaults to 1800 seconds.
+    Published instruments, steps, expiry and positions are validated by the server.
+
     Returns:
         dict: Raw response body as returned by the server. Use
         :meth:`CreateMasterOrderV2Reply.from_dict` for typed access.
@@ -226,6 +299,8 @@ def create_master_order_v2(
     validate_exchange(params["exchange"])
     validate_market_type(params["marketType"])
 
+    if params["marketType"] == "OPTION" and params.get("executionDurationSeconds") in (None, 0):
+        params["executionDurationSeconds"] = 1800
     duration = params.get("executionDurationSeconds")
     if duration is None:
         raise ValueError("executionDurationSeconds is required")
@@ -259,6 +334,9 @@ def create_master_order_v2(
             raise ValueError(
                 "orderNotional is not allowed when isTargetPosition is True"
             )
+
+    if params["marketType"] == "OPTION":
+        _validate_option_request(params)
 
     if "startTimeMs" in params and params["startTimeMs"] is not None:
         try:

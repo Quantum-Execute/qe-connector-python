@@ -4,6 +4,7 @@ WebSocket消息类型定义
 from typing import Optional, Callable, Any
 from dataclasses import dataclass
 from enum import Enum
+from qe.lib.trading_v2_types import OptionMetadata
 
 
 class ClientMessageType(Enum):
@@ -51,6 +52,9 @@ class MasterOrderMessage:
     ticktime_ms: int
     reason: str
     timestamp: int
+    option_metadata: Optional[OptionMetadata] = None
+    base_currency: Optional[str] = None
+    quote_currency: Optional[str] = None
 
 
 @dataclass
@@ -76,6 +80,9 @@ class OrderMessage:
     price_type: str
     reason: str
     timestamp: int
+    option_metadata: Optional[OptionMetadata] = None
+    base_currency: Optional[str] = None
+    quote_currency: Optional[str] = None
 
 
 @dataclass

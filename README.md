@@ -90,6 +90,8 @@ response = client.create_master_order(
 
 ## V2 接口（推荐用于新接入）
 
+**Deribit 期权**：使用 V2 `marketType=OPTION`，支持 USDC 与 BTC/ETH 币本位。接入规则、目标仓位、必填权利金限价及可运行示例见 [期权接入指南](docs/options-v2.md)。需使用包含本次期权支持的源码或后续发行版，旧版 1.3.3 不具备完整支持。
+
 自 `1.1.0` 起 SDK 同步上线 V2 strategy-api 接口，路径形如 `/strategy-api/.../v2/...`。**V1 方法保留不变**，老业务可以平滑迁移。
 
 V2 主要差异：
@@ -122,13 +124,13 @@ V2 主要差异：
 | `update_master_order_v2(masterOrderId, request            | **kwargs)`             |
 | `batch_cancel_master_orders_v2(ids, reason=...)`        | 批量取消               |
 
-V2 公开交易对使用 `Pub.trading_pairs_v2(exchange=..., marketType=..., isCoin=...)`，
+V2 公开交易对使用 `Pub.trading_pairs_v2(exchange=..., marketType=..., isCoin=..., symbol=...)`，
 对应 `GET /pub/v2/trading-pairs`。Bitget 的 V1/V2 读取都使用后端通过
 `POST /file/trading-pair/upload` 发布的同一份快照，SDK 不会触发交易所产品同步。
 
 ### V2 类型（`from qe import ...` 或 `from qe.lib import ...`）
 
-`CreateMasterOrderV2Request`、`CreateMasterOrderV2Reply`、`MasterOrderV2Info`、`MasterOrderListV2Reply`、`OrderFillV2Info`、`OrderFillListV2Reply`、`ExchangeApiV2Info`、`ExchangeApiListV2Reply`、`MasterOrderActionV2Reply`、`UpdateMasterOrderV2Request`、`BatchCancelV2Reply`、`BatchCancelV2FailedItem`、`MasterOrderStatusV2`。
+`CreateMasterOrderV2Request`、`CreateMasterOrderV2Reply`、`OptionMetadata`、`MasterOrderV2Info`、`MasterOrderListV2Reply`、`OrderFillV2Info`、`OrderFillListV2Reply`、`ExchangeApiV2Info`、`ExchangeApiListV2Reply`、`MasterOrderActionV2Reply`、`UpdateMasterOrderV2Request`、`BatchCancelV2Reply`、`BatchCancelV2FailedItem`、`MasterOrderStatusV2`。
 
 请求 dataclass 提供 `to_payload()`，会按 V2 约定把 Decimal 字段序列化成字符串、剔除 `None`；响应 dataclass 提供 `from_dict(raw)`，便于把后端 dict 转为带类型的对象。
 

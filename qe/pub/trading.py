@@ -1,4 +1,4 @@
-from qe.lib.trading_enums import Exchange, TradingPairMarketType
+from qe.lib.trading_enums import Exchange, TradingPairMarketType, MarketType
 
 
 def _normalize_trading_pair_filters(kwargs):
@@ -6,7 +6,7 @@ def _normalize_trading_pair_filters(kwargs):
     params = dict(kwargs)
     if isinstance(params.get("exchange"), Exchange):
         params["exchange"] = params["exchange"].value
-    if isinstance(params.get("marketType"), TradingPairMarketType):
+    if isinstance(params.get("marketType"), (TradingPairMarketType, MarketType)):
         params["marketType"] = params["marketType"].value
     return params
 
@@ -35,7 +35,13 @@ def trading_pairs_v2(self, **kwargs):
 
     Keyword Args:
         exchange (Exchange | str, optional): Exchange name filter.
-        marketType (TradingPairMarketType | str, optional): ``SPOT`` or ``PERP``.
-        isCoin (bool, optional): Whether to return coin-margined contracts.
+        marketType (TradingPairMarketType | str, optional): ``SPOT``, ``PERP`` or ``OPTION`` (Deribit).
+        isCoin (bool, optional): PERP filter; not an option settlement selector.
+        symbol (str, optional): Exact published contract name. For an active
+            option, resolves price tiers and sets rulesReady=true. List-only
+            option rows are not complete executable price rules.
+
+    Returns a dict containing items, including option identity, base-asset
+    quantity rules, premium tickSize/tickSizeSteps, and rulesReady.
     """
     return self.query("/pub/v2/trading-pairs", _normalize_trading_pair_filters(kwargs))

@@ -63,7 +63,7 @@ MASTER_ORDER_STATUSES_V2 = frozenset(s.value for s in MasterOrderStatusV2)
 
 
 # 创建/查询母单时允许的市场类型。V2 文档第 2 节定义。
-_MARKET_TYPES = frozenset({"SPOT", "PERP"})
+_MARKET_TYPES = frozenset({"SPOT", "PERP", "OPTION"})
 
 # 创建/查询母单时允许的交易所。V2 文档第 2 节定义。
 _EXCHANGES = frozenset(
@@ -219,6 +219,9 @@ class CreateMasterOrderV2Request:
     triggerPrice1: Optional[DecimalLike] = None
     maxTriggerWaitTimeoutAction: Optional[int] = None
 
+    # Required only for OPTION targets: the previewed delta direction, not target side.
+    expectedExecutionSide: Optional[str] = None
+
     def to_payload(self) -> Dict[str, Any]:
         validate_trigger_timeout_action(self.maxTriggerWaitTimeoutAction)
         decimal_fields = {
@@ -259,6 +262,25 @@ class CreateMasterOrderV2Reply:
 # ---------------------------------------------------------------------------
 # Master order info (5.3)
 # ---------------------------------------------------------------------------
+
+
+@dataclass
+class OptionMetadata:
+    """Server-validated contract identity, without live quotes or target snapshots."""
+
+    optionType: Optional[str] = None
+    strike: Optional[str] = None
+    expirationTimestamp: Optional[int] = None
+    contractSize: Optional[str] = None
+    contractType: Optional[str] = None
+    underlyingIndex: Optional[str] = None
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "OptionMetadata":
+        payload = {name: data.get(name) for name in _field_names(cls)}
+        if payload["expirationTimestamp"] is not None:
+            payload["expirationTimestamp"] = int(payload["expirationTimestamp"])
+        return cls(**payload)
 
 
 @dataclass
@@ -311,6 +333,7 @@ class MasterOrderV2Info:
     triggerPrice1: Optional[str] = None
     maxTriggerWaitSecs: Optional[float] = None
     maxTriggerWaitTimeoutAction: Optional[int] = None
+    optionMetadata: Optional[OptionMetadata] = None
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "MasterOrderV2Info":
@@ -319,6 +342,8 @@ class MasterOrderV2Info:
             payload["apiKeyId"] = payload.get("apiKeyUuid")
         if payload.get("apiKeyUuid") is None:
             payload["apiKeyUuid"] = payload.get("apiKeyId")
+        if payload.get("optionMetadata") is not None:
+            payload["optionMetadata"] = OptionMetadata.from_dict(payload["optionMetadata"])
         names = _field_names(cls)
         kwargs: Dict[str, Any] = {}
         for name in names:
@@ -410,13 +435,16 @@ class OrderFillV2Info:
     quantity: Optional[str] = None
     createdAt: Optional[str] = None
     updatedAt: Optional[str] = None
+    optionMetadata: Optional[OptionMetadata] = None
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "OrderFillV2Info":
         kwargs: Dict[str, Any] = {}
         for name in _field_names(cls):
             v = data.get(name)
-            if name in _ORDER_FILL_V2_DECIMAL_FIELDS:
+            if name == "optionMetadata" and v is not None:
+                kwargs[name] = OptionMetadata.from_dict(v)
+            elif name in _ORDER_FILL_V2_DECIMAL_FIELDS:
                 kwargs[name] = _coerce_decimal_field(v)
             else:
                 kwargs[name] = v
@@ -584,6 +612,7 @@ __all__ = [
     "ExchangeApiListV2Reply",
     "CreateMasterOrderV2Request",
     "CreateMasterOrderV2Reply",
+    "OptionMetadata",
     "MasterOrderV2Info",
     "MasterOrderListV2Reply",
     "OrderFillV2Info",

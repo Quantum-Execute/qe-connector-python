@@ -11,6 +11,8 @@ from typing import Optional, Dict, Any
 import websockets
 from websockets.exceptions import ConnectionClosed, WebSocketException
 
+from qe.lib.trading_v2_types import OptionMetadata
+
 from .types import (
     WebSocketEventHandlers,
     ClientPushMessage,
@@ -305,6 +307,9 @@ class WebSocketService:
             ticktime_ms=cls._to_int(cls._get_any(data, "ticktime_ms", "ticktimeMs", default=0)),
             reason=cls._get_any(data, "reason", "rejectReason", default=""),
             timestamp=cls._to_int(cls._get_any(data, "timestamp", default=0)),
+            option_metadata=OptionMetadata.from_dict(data["optionMetadata"]) if data.get("optionMetadata") else None,
+            base_currency=cls._get_any(data, "baseCurrency", "base_currency"),
+            quote_currency=cls._get_any(data, "quoteCurrency", "quote_currency"),
         )
 
     @classmethod
@@ -335,6 +340,9 @@ class WebSocketService:
             price_type=cls._get_any(data, "price_type", "priceType", "orderType", default=""),
             reason=cls._get_any(data, "reason", "rejectReason", default=""),
             timestamp=cls._to_int(cls._get_any(data, "timestamp", default=0)),
+            option_metadata=OptionMetadata.from_dict(data["optionMetadata"]) if data.get("optionMetadata") else None,
+            base_currency=cls._get_any(data, "baseCurrency", "base_currency"),
+            quote_currency=cls._get_any(data, "quoteCurrency", "quote_currency"),
         )
     
     def _handle_disconnect(self):
