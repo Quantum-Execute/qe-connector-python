@@ -19,7 +19,7 @@
 
 ### 文档与示例
 
-- 增加 [期权接入指南](docs/options-v2.md) 和默认仅预览、显式确认后提交的运行示例。
+- 增加 [期权接入指南](https://github.com/Quantum-Execute/qe-connector-python/blob/master/docs/options-v2.md) 和默认仅预览、显式确认后提交的运行示例。
 - 补充请求签名、数量单位、目标方向冲突、价格边界及 REST / WebSocket 合约资料的离线回归测试。
 
 ## 1.3.3 - 2026-09-30

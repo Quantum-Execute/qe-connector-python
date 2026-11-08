@@ -90,7 +90,7 @@ response = client.create_master_order(
 
 ## V2 接口（推荐用于新接入）
 
-**Deribit 期权**：使用 V2 `marketType=OPTION`，支持 USDC 与 BTC/ETH 币本位。接入规则、目标仓位、必填权利金限价及可运行示例见 [期权接入指南](docs/options-v2.md)。需使用包含本次期权支持的源码或后续发行版，旧版 1.3.3 不具备完整支持。
+**Deribit 期权**：使用 V2 `marketType=OPTION`，支持 USDC 与 BTC/ETH 币本位。接入规则、目标仓位、必填权利金限价及可运行示例见 [期权接入指南](https://github.com/Quantum-Execute/qe-connector-python/blob/master/docs/options-v2.md)。需使用包含本次期权支持的源码或后续发行版，旧版 1.3.3 不具备完整支持。
 
 自 `1.1.0` 起 SDK 同步上线 V2 strategy-api 接口，路径形如 `/strategy-api/.../v2/...`。**V1 方法保留不变**，老业务可以平滑迁移。
 
@@ -179,7 +179,7 @@ for o in page.items:
 client.cancel_master_order_v2(created.masterOrderId, reason="manual cleanup")
 ```
 
-更完整的样例见 [`examples/user/v2/`](examples/user/v2/)。
+更完整的样例见 [`examples/user/v2/`](https://github.com/Quantum-Execute/qe-connector-python/tree/master/examples/user/v2/)。
 
 ## API 参考（V1）
 
