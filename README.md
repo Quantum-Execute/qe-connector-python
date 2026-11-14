@@ -27,6 +27,15 @@
 pip install qe-connector
 ```
 
+期权自动选价自 **1.4.1** 起支持。1.4.0 支持期权，但创建时仍要求正数保护价，会拒绝 `worstPrice="-1"`。使用 `"-1"` 的客户需升级：
+
+```bash
+python -m pip install --upgrade "qe-connector==1.4.1"
+python -c 'from importlib.metadata import version; print(version("qe-connector"))'
+```
+
+版本检查应输出 1.4.1；同时需要支持该选价约定的后端和算法版本。
+
 或者从源码安装：
 
 ```bash
@@ -90,7 +99,7 @@ response = client.create_master_order(
 
 ## V2 接口（推荐用于新接入）
 
-**Deribit 期权**：使用 V2 `marketType=OPTION`，支持 USDC 与 BTC/ETH 币本位。接入规则、目标仓位、必填权利金限价及可运行示例见 [期权接入指南](https://github.com/Quantum-Execute/qe-connector-python/blob/master/docs/options-v2.md)。需使用包含本次期权支持的源码或后续发行版，旧版 1.3.3 不具备完整支持。
+**Deribit 期权**：使用 V2 `marketType=OPTION`，支持 USDC 与 BTC/ETH 币本位。期权 `worstPrice` 支持正数保护价或 `"-1"` 算法选价标记（买入卖五、卖出买五，不足五档取最后一档）。接入规则、目标仓位及可运行示例见 [期权接入指南](https://github.com/Quantum-Execute/qe-connector-python/blob/master/docs/options-v2.md)。期权基础支持始于 1.4.0；使用 `"-1"` 创建期权需升级到 1.4.1 或以上版本。
 
 自 `1.1.0` 起 SDK 同步上线 V2 strategy-api 接口，路径形如 `/strategy-api/.../v2/...`。**V1 方法保留不变**，老业务可以平滑迁移。
 

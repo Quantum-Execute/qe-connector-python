@@ -7,7 +7,7 @@ import pytest
 
 from qe.error import APIError
 from qe.lib.trading_enums import Exchange, MarketType, OrderSide, TradingPairMarketType
-from qe.lib.trading_v2_types import CreateMasterOrderV2Request, MasterOrderV2Info, OrderFillV2Info
+from qe.lib.trading_v2_types import CreateMasterOrderV2Request, MasterOrderV2Info, OrderFillV2Info, UpdateMasterOrderV2Request
 from qe.pub import Pub
 from qe.user import User
 from qe.ws.client import WebSocketService
@@ -38,6 +38,9 @@ def option_request(**overrides):
     ("SOL_USDC-25DEC26-100-C", "10", "0.125"),
     ("BTC-25DEC26-100000-P", "0.1", "0.0005"),
     ("ETH-25DEC26-3000-C", "0.1", "0.0001"),
+    ("SOL_USDC-25DEC26-100-C", "10", "-1"),
+    ("BTC-25DEC26-100000-P", "0.1", "-1"),
+    ("ETH-25DEC26-3000-C", "0.1", "-1"),
 ])
 def test_option_create_preserves_units_and_signs_target_direction(monkeypatch, typed, symbol, quantity, price):
     client = User("key", "secret", base_url="https://example.test")
@@ -73,21 +76,56 @@ def test_option_create_preserves_units_and_signs_target_direction(monkeypatch, t
     assert query["signature"] == [client._get_sign(urlencode(sorted(values.items())))]
 
 
+@pytest.mark.parametrize("typed", [False, True])
+@pytest.mark.parametrize("side", ["buy", "sell"])
+@pytest.mark.parametrize("price", ["-1", -1, Decimal("-1")])
+def test_option_automatic_premium_create_and_amend(monkeypatch, typed, side, price):
+    client = User("key", "secret")
+    sent = []
+    monkeypatch.setattr(client, "sign_json_request", lambda *args: sent.append(args))
+    params = option_request()
+    params.update(side=side, worstPrice=price)
+    if typed:
+        client.create_master_order_v2(CreateMasterOrderV2Request(**params))
+    else:
+        client.create_master_order_v2(**params)
+    assert sent[0][0:2] == ("POST", "/user/trading/v2/master-orders")
+    assert sent[0][2]["marketType"] == "OPTION"
+    assert sent[0][2]["side"] == side
+    assert sent[0][2]["worstPrice"] == "-1"
+    for premium in ["0.125", price]:
+        if typed:
+            client.update_master_order_v2("option-order", UpdateMasterOrderV2Request(worstPrice=premium))
+        else:
+            client.update_master_order_v2("option-order", worstPrice=premium)
+    assert [request[2]["worstPrice"] for request in sent] == ["-1", "0.125", "-1"]
+    assert all(request[0:2] == ("PUT", "/user/trading/v2/master-orders/option-order/update") for request in sent[1:])
+
+
+@pytest.mark.parametrize("typed", [False, True])
 @pytest.mark.parametrize("changes", [
     {"exchange": "Binance"}, {"orderNotional": "10", "totalQuantity": None},
     {"isMargin": True}, {"worstPrice": None}, {"worstPrice": "0"},
-    {"worstPrice": "-1"}, {"worstPrice": "NaN"}, {"totalQuantity": "0"},
+    {"worstPrice": "-2"}, {"worstPrice": "-0.5"}, {"worstPrice": "-1.0"},
+    {"worstPrice": ""}, {"worstPrice": "NaN"}, {"worstPrice": "Inf"}, {"totalQuantity": "0"},
     {"isTargetPosition": True}, {"isTargetPosition": True, "expectedExecutionSide": "long"},
     {"triggerPrice": "0.1"}, {"triggerPrice1": "0.1", "maxTriggerWaitSecs": 0},
     {"triggerPrice": "0.1", "maxTriggerWaitSecs": float("inf")},
+    {"worstPrice": "-1", "totalQuantity": "-1"},
+    {"worstPrice": "-1", "totalQuantity": "-1", "isTargetPosition": True, "expectedExecutionSide": "sell"},
+    {"worstPrice": "-1", "isTargetPosition": True},
+    {"worstPrice": "-1", "triggerPrice": "0.1"},
 ])
-def test_invalid_option_requests_do_not_reach_http(monkeypatch, changes):
+def test_invalid_option_requests_do_not_reach_http(monkeypatch, changes, typed):
     client = User("key", "secret")
     monkeypatch.setattr(client.session, "post", lambda **_: pytest.fail("invalid option sent"))
     params = option_request()
     params.update(changes)
     with pytest.raises(ValueError):
-        client.create_master_order_v2(**params)
+        if typed:
+            client.create_master_order_v2(CreateMasterOrderV2Request(**params))
+        else:
+            client.create_master_order_v2(**params)
 
 
 def test_zero_target_and_direction_change_error(monkeypatch):
@@ -208,14 +246,19 @@ def test_option_trigger_prices_follow_backend_contract(monkeypatch, typed, field
         assert not sent
 
 
-def test_option_premium_limit_accepts_backend_whitespace(monkeypatch):
+@pytest.mark.parametrize("price", [" 0.125 ", " -1 "])
+@pytest.mark.parametrize("typed", [False, True])
+def test_option_premium_limit_accepts_backend_whitespace(monkeypatch, price, typed):
     client = User("key", "secret")
     sent = []
     monkeypatch.setattr(client, "sign_json_request", lambda *args: sent.append(args[2]))
     params = option_request()
-    params["worstPrice"] = " 0.125 "
-    client.create_master_order_v2(**params)
-    assert sent[0]["worstPrice"] == " 0.125 "
+    params["worstPrice"] = price
+    if typed:
+        client.create_master_order_v2(CreateMasterOrderV2Request(**params))
+    else:
+        client.create_master_order_v2(**params)
+    assert sent[0]["worstPrice"] == price
 
 
 def test_optional_metadata_and_public_exports():

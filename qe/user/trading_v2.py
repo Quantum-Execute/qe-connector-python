@@ -164,6 +164,9 @@ def _validate_option_request(params: Dict[str, Any]) -> None:
     target = params.get("isTargetPosition") is True
     for name, allow_zero in (("totalQuantity", target), ("worstPrice", False)):
         value = params.get(name)
+        # Only the protection price supports the algorithm's automatic-price marker.
+        if name == "worstPrice" and isinstance(value, str) and value.strip() == "-1":
+            continue
         if not isinstance(value, str) or not re.fullmatch(
             r"[0-9]{1,20}(\.[0-9]{1,10})?", value.strip()
         ):
@@ -240,9 +243,11 @@ def create_master_order_v2(
     ``maxTriggerWaitTimeoutAction`` accepts integers 0..10; omission defaults to
     0 (expire order). Codes 1..10 require support from the algorithm version.
 
-    OPTION is Deribit-only. Quantities are in the base asset; worstPrice is a
-    required positive premium. Target mode requires expectedExecutionSide from
-    a current-position preview. Omitted/zero duration defaults to 1800 seconds.
+    OPTION is Deribit-only. Quantities are in the base asset; worstPrice requires
+    a positive premium or "-1" for algorithm selection of ask level five for buys
+    or bid level five for sells (last available if fewer than five). Target mode
+    requires expectedExecutionSide from a current-position preview.
+    Omitted/zero duration defaults to 1800 seconds.
     Published instruments, steps, expiry and positions are validated by the server.
 
     Returns:
@@ -529,6 +534,11 @@ def update_master_order_v2(
 ):
     """Update parameters of a running V2 master order. Only provided fields
     are updated; everything else stays as-is.
+
+    For OPTION, worstPrice="-1" delegates protection-price selection to the
+    algorithm: ask level five for buys, bid level five for sells, or the last
+    available opposing level if fewer than five. Positive prices remain explicit
+    protection prices and are validated against the contract's ticks server-side.
 
     ``PUT /strategy-api/user/trading/v2/master-orders/{masterOrderId}/update``
 

@@ -33,7 +33,8 @@
 | ----------- | -------------------------------------------------- |
 | PyPI 包名   | `qe-connector`                                   |
 | Python 版本 | `>=3.8`                                          |
-| SDK 版本    | `qe/__version__.py` 中 `__version__ = "1.3.1"` |
+| SDK 源码版本 | `qe/__version__.py` 中 `__version__ = "1.4.1"` |
+| 期权价格兼容性 | 1.4.0 创建仅支持正数；1.4.1 起支持算法选价标记 `"-1"` |
 | 测试矩阵    | `tox.ini` 中 `py38,py39,310,311`               |
 
 安装开发依赖后运行：
@@ -366,7 +367,7 @@ twine upload dist/* --verbose
 推荐发版流程：
 
 1. 更新 `qe/__version__.py`。
-2. 更新 `CHANGELOG.md`，把 `Unreleased` 内容归档到新版本。
+2. 更新 `CHANGELOG.md` 的目标版本和发布日期，并同步 README 与 `docs/options-v2.md` 的版本说明。
 3. 同步 README、examples 和 QE-API-Key 文档站示例。
 4. 跑 `python -m pytest`，必要时跑 `tox`。
 5. 正式构建前清理旧产物，避免把历史版本一起上传。
@@ -374,7 +375,7 @@ twine upload dist/* --verbose
 7. 上传前检查 `dist/` 中只包含本次版本。
 8. 执行 `make upload` 或 CI 发布。
 
-注意：本仓库当前已经存在历史 `dist` 文件。只有在明确进入发版流程时才清理或重建，普通交接文档/代码小改不要动产物。
+上传前确保 `dist/` 只包含本次版本的 wheel 和 sdist，历史产物应先备份。源码包必须包含 `requirements/common.txt`，由 `MANIFEST.in` 声明，避免客户从 sdist 安装时缺失依赖清单。
 
 ## 12. 常见风险点
 

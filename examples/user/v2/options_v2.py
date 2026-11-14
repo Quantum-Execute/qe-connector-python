@@ -17,7 +17,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--symbol", required=True, help="Full name from the published OPTION list")
     parser.add_argument("--quantity", required=True, help="Base-asset quantity, not contracts")
-    parser.add_argument("--premium-limit", required=True, help="Premium per base asset, in USDC/BTC/ETH")
+    parser.add_argument("--premium-limit", required=True, help="Positive premium per base asset (USDC/BTC/ETH), or -1 for algorithm selection of the fifth opposing price level")
     parser.add_argument("--side", choices=["buy", "sell"], default="buy")
     parser.add_argument("--submit", action="store_true", help="Submit a real order using QE_API_KEY/QE_API_SECRET/QE_EXCHANGE_API_KEY_ID")
     args = parser.parse_args()

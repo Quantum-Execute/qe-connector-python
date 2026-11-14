@@ -1,6 +1,13 @@
 # Deribit 期权接入（V2）
 
-期权使用现有 V2 接口，支持已发布 CSV 内的 **USDC 线性期权**和 **BTC/ETH 币本位期权**。本指南对应包含期权支持的 SDK 源码；旧版 1.3.3 尚无完整支持，安装旧发行版不能直接运行以下新增用法。
+期权使用现有 V2 接口，支持已发布 CSV 内的 **USDC 线性期权**和 **BTC/ETH 币本位期权**。本指南适用于 **1.4.1 及以上版本**，支持 `worstPrice="-1"` 算法选价。
+
+| SDK 版本 | 期权创建的价格规则 |
+| --- | --- |
+| 1.4.0 | 必须显式传正数保护价，传 `"-1"` 会在本地被拦截 |
+| 1.4.1 及以上 | 必须显式传正数保护价或 `"-1"`；后者委托算法按对手第五档选价 |
+
+使用 1.4.0 创建期权时，仍须传正数；本文涉及 `"-1"` 的创建用法需升级到 1.4.1 及以上版本。改单不传价格仍保留原值。
 
 - 创建母单：`POST /user/trading/v2/master-orders`，`exchange=Deribit`、`marketType=OPTION`。
 - `symbol` 必须是发布列表中的完整合约名，不能使用标的 pair。`SOL_USDC-25DEC26-100-C` 仅说明格式，不保证当前可交易。
@@ -39,11 +46,15 @@
 
 - **张数 × contractSize = totalQuantity**，调用 SDK 前只换算一次。若乘数是 10，1 张传 `"10"`，不是 `"1"`；SDK 不再乘乘数。BTC/ETH 乘数为 1 也可按合约规则使用小数数量。
 - 普通模式数量必须正数且满足最小量和步长；目标模式可为零，仍需满足步长，实际差额也由后端校验。
-- `worstPrice` 是**必填的正数权利金限价**：实际买入的最高价格 / 实际卖出的最低价格。不可留空或传 0、-1 表示不限价。按合约有效价格步长校验。
-- API/SDK 不会自动查询买一卖一或预填限价。调用方选择价格；行情不可用时仍可提交手填有效限价，服务端会检查合约规则。
+- `worstPrice` **必填**：传有效正数作为实际买入的最高价 / 实际卖出的最低价，由后端校验合约价格步长；或显式传字符串 `"-1"`，委托算法按对手第五档选价。买入取 ask 第五档，卖出取 bid 第五档，不足五档取对手方最后一档。OPTION 的 `-1` 不表示无限价；0、其他负数及 NaN/Inf 仍拒绝。
+- SDK 不查询盘口或自行计算第五档价格，后端保存并透传 `"-1"`。未传价格仍拒绝，不会自动补成 `-1`；调用方也可继续手填有效正数保护价。
 - 不传 `orderNotional`（包括 0），不使用 `isMargin=true`。普通数量模式支持 `reduceOnly`。
 - 数量和价格使用十进制字符串；限价/数量最多 20 位整数、10 位小数，不用科学记数法。服务端验证动态规则，SDK 的静态校验不替代服务端。
 - 权利金估算为标的币数量 × 权利金单价；名义价值估算为标的币数量 × 指数价。不能把 BTC/ETH 权利金直接标成 USD；估算不等于保证金，也不含手续费。
+
+创建时向 `create_master_order_v2()` 或 `CreateMasterOrderV2Request` 传入 `worstPrice="-1"`；改单时向 `update_master_order_v2()` 或 `UpdateMasterOrderV2Request` 传同一值，可在算法选价和正数保护价之间切换。服务端查询返回的 `-1` 是选价标记，不是算法已确定的保护价；不能用它直接估算权利金。
+
+该用法需要使用 1.4.1 及以上版本，并部署支持此约定的后端和算法版本。SPOT/PERP 的 `-1` 仍表示不限制价格。算法完全没有有效对手盘时不得把 OPTION 的 `-1` 当成无限价执行；具体等待或拒绝行为需算法侧确认和联调。
 
 ## 3. 默认值、触发与到期
 
@@ -51,7 +62,7 @@
 - OPTION 的 `executionDurationSeconds` 省略或传 0 时默认 **1800 秒**；显式时长必须 >10 秒。SPOT/PERP 的原有时长要求不变。
 - `mustComplete`、`tailOrderProtection` 的期权服务端默认值均为 false；建议显式传 false。
 - `triggerPrice` / `triggerPrice1` 使用期权权利金口径，不是标的指数。留空或 0 禁用对应项；任一启用时 `maxTriggerWaitSecs` 必须为有限正数。
-- 触发价兼容首尾空白、小数及科学计数法；展开后按非负 `DECIMAL(30,10)` 校验，最多 20 位整数和 10 位有效小数。不接受下划线、分数、负数（含 `-0`）、NaN 或 Infinity；`worstPrice` 仍须为正数普通十进制，兼容首尾空白。
+- 触发价兼容首尾空白、小数及科学计数法；展开后按非负 `DECIMAL(30,10)` 校验，最多 20 位整数和 10 位有效小数。不接受下划线、分数、负数（含 `-0`）、NaN 或 Infinity；`worstPrice` 接受普通十进制正数或选价标记 `"-1"`，兼容首尾空白，`"-1.0"` 等其他写法不作为标记接受。
 - `maxTriggerWaitTimeoutAction` 沿用 0～10 的整数，0=超时终止；其余编号使用前确认算法版本支持。
 - 创建时必须满足：
 
@@ -100,7 +111,7 @@ max(服务端当前时间, startTimeMs)
 - 母单和子单 REST 响应可包含 `optionMetadata`；子单复用母单静态资料。
 - 六个字段：`optionType`、`strike`、`expirationTimestamp`、`contractSize`、`contractType`、`underlyingIndex`。该对象由后端验证保存，不接受客户端提交，不包含 IV、Delta、行情或目标仓位快照。
 - 沿用 listenKey / V2 WebSocket，SDK 解析可选 metadata。不是每种推送都保证携带它；缺失时用母单 ID 补查 REST 详情。非期权或旧记录缺失时为 nil/None。
-- 改限价仍必须为有效正数权利金并符合步长；不能改成按名义金额下单。改数量需满足最小量/步长且不小于已成交量。
+- 改限价可传有效正数权利金（须符合步长）或 `"-1"` 算法选价标记；不传保留原值，后端仍拒绝 0 和其他负数。不能改成按名义金额下单。改数量需满足最小量/步长且不小于已成交量。
 - 改执行时长会重新验证到期边界；已到期或距到期不足一分钟不能修改/恢复。改单作用于已生成的委托，不重新设置目标仓位。
 - 通常 `code=400 / reason=OPTION_INVALID` 表示合约、规则、数量、限价、到期或持仓读取等校验失败，具体看 message。HTTP 200 不等于业务成功；SDK 会抛出/返回 API 错误，保留 reason。
 
@@ -133,10 +144,19 @@ python examples/user/v2/options_v2.py --symbol 'YOUR_PUBLISHED_OPTION_SYMBOL' \
   --quantity '10' --premium-limit '0.125'
 ```
 
+将参数改为 `--premium-limit=-1` 可预览算法选价模式。
+
 默认只读查询规则并打印请求预览。需要提交真实订单时先设置 `QE_API_KEY`、`QE_API_SECRET`、`QE_EXCHANGE_API_KEY_ID`，再显式添加 `--submit`；价格与数量必须自行按所选合约调整。可通过 `QE_BASE_URL` 指定环境。
 
 ## 7. 验证与发布
 
 离线回归：`python -m pytest tests`。期权测试 mock HTTP 请求，覆盖签名、USDC/BTC/ETH 数量和币种、静态校验、目标方向冲突、REST / WS metadata；不会创建真实订单。
 
-本次源码更新不等于 PyPI 已发布。当前可使用上面的 editable install 验证；下游需安装包含这些修改的后续发行版。
+客户使用以下命令升级并检查实际安装的版本：
+
+```bash
+python -m pip install --upgrade "qe-connector==1.4.1"
+python -c 'from importlib.metadata import version; print(version("qe-connector"))'
+```
+
+第二条命令应输出 1.4.1。客户仍安装 1.4.0 时，不能使用 `"-1"` 创建期权。SDK 升级不替代后端与算法版本部署。
